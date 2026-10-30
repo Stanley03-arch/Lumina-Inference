@@ -17,6 +17,19 @@ async fn main() -> Result<()> {
         .with_env_filter(EnvFilter::from_default_env().add_directive("info".parse().unwrap()))
         .init();
 
+    // Client mode: LUMINA_GRPC_CLIENT=http://127.0.0.1:50051
+    #[cfg(feature = "grpc")]
+    if let Ok(endpoint) = std::env::var("LUMINA_GRPC_CLIENT") {
+        return run_grpc_client(&endpoint).await;
+    }
+    #[cfg(not(feature = "grpc"))]
+    if std::env::var("LUMINA_GRPC_CLIENT").is_ok() {
+        eprintln!("LUMINA_GRPC_CLIENT set but binary built without `--features grpc`");
+        return Err(lumina_inference::LuminaError::Config(
+            "rebuild with --features grpc".into(),
+        ));
+    }
+
     let metrics = Arc::new(Metrics::default());
 
     if let Ok(addr_str) = std::env::var("LUMINA_METRICS_ADDR") {
@@ -81,7 +94,6 @@ async fn main() -> Result<()> {
     #[cfg(not(feature = "grpc"))]
     println!("gRPC feature: disabled (cargo run --features grpc)");
 
-    // Optional long-running gRPC server: LUMINA_GRPC_ADDR=127.0.0.1:50051
     #[cfg(feature = "grpc")]
     if let Ok(addr_str) = std::env::var("LUMINA_GRPC_ADDR") {
         let addr: SocketAddr = addr_str
@@ -99,7 +111,6 @@ async fn main() -> Result<()> {
         eprintln!("LUMINA_GRPC_ADDR set but binary built without `--features grpc`");
     }
 
-    // Demo batch path (default)
     let mut demo = engine;
     for i in 0..4 {
         let req = InferenceRequest {
@@ -135,6 +146,52 @@ async fn main() -> Result<()> {
         tokio::time::sleep(std::time::Duration::from_secs(30)).await;
     } else {
         println!("demo complete");
+    }
+    Ok(())
+}
+
+#[cfg(feature = "grpc")]
+async fn run_grpc_client(endpoint: &str) -> Result<()> {
+    use lumina_inference::InferenceClient;
+
+    println!("gRPC client → {endpoint}");
+    let mut client = InferenceClient::connect(endpoint).await?;
+
+    let (ok, version) = client.health().await?;
+    println!("Health: ok={ok} version={version}");
+
+    let resp = client
+        .predict(InferenceRequest {
+            id: "client-1".into(),
+            model: "default".into(),
+            input: 1.0f32.to_le_bytes().to_vec(),
+        })
+        .await?;
+    println!(
+        "Predict: id={} model={} out_len={} latency_ms={}",
+        resp.id,
+        resp.model,
+        resp.output.len(),
+        resp.latency_ms
+    );
+
+    let batch = client
+        .predict_batch(vec![
+            InferenceRequest {
+                id: "b0".into(),
+                model: "default".into(),
+                input: 2.0f32.to_le_bytes().to_vec(),
+            },
+            InferenceRequest {
+                id: "b1".into(),
+                model: "default".into(),
+                input: 3.0f32.to_le_bytes().to_vec(),
+            },
+        ])
+        .await?;
+    println!("PredictBatch: {} responses", batch.len());
+    for r in &batch {
+        println!("  {} out_len={} latency_ms={}", r.id, r.output.len(), r.latency_ms);
     }
     Ok(())
 }
