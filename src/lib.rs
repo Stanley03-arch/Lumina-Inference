@@ -13,6 +13,7 @@ pub mod metrics;
 pub mod onnx_worker;
 pub mod prometheus_server;
 pub mod registry;
+pub mod tensor;
 pub mod worker;
 
 #[cfg(feature = "grpc")]
@@ -28,6 +29,7 @@ pub use metrics::{Metrics, MetricsSnapshot};
 pub use onnx_worker::OnnxWorker;
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
 pub use registry::{ModelInfo, ModelRegistry};
+pub use tensor::{IoBinding, NamedTensors, TensorDType, TensorSpec};
 pub use worker::{InferenceWorker, LocalWorker};
 
 #[cfg(feature = "grpc")]
