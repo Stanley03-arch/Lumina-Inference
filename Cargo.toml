@@ -14,7 +14,7 @@ default = []
 # ONNX Runtime worker (needs ORT shared libs).
 onnx = ["dep:ort"]
 # gRPC serve surface (needs `protoc` at build time).
-grpc = ["dep:tonic", "dep:prost", "dep:tonic-build"]
+grpc = ["dep:tonic", "dep:prost"]
 
 [dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util"] }
@@ -28,7 +28,7 @@ tonic = { version = "0.12", optional = true }
 prost = { version = "0.13", optional = true }
 
 [build-dependencies]
-tonic-build = { version = "0.12", optional = true }
+tonic-build = "0.12"
 
 [dev-dependencies]
 tokio-test = "0.4"
