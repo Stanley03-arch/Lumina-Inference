@@ -2,29 +2,34 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state
+## Current state (v0.1.0)
 
-- Public docs: README, CONTRIBUTING, CODE_OF_CONDUCT, LICENSE
-- Preview image in-repo
-- Implementation scaffold may still expand beyond documentation
+Working scaffold on `master`:
 
-## Goals (from project description)
+| Piece | Status |
+|-------|--------|
+| `Cargo.toml` | ✅ |
+| Config + errors | ✅ |
+| Batch accumulator | ✅ |
+| Local echo worker | ✅ (stand-in for ONNX) |
+| InferenceEngine | ✅ |
+| CLI `lumina` | ✅ |
+| gRPC / ONNX / Prometheus | 🔜 next milestones |
 
-- Low-latency serving
-- Distributed workers + batching
-- Model versioning
-- Prometheus observability
-- gRPC API
-- ONNX Runtime
-
-## Contributor path
+## Verify
 
 ```bash
 git clone https://github.com/Stanley03-arch/Lumina-Inference.git
 cd Lumina-Inference
-# When Cargo sources land:
-# cargo test
-# cargo fmt
+cargo test
+cargo run --bin lumina
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for PR workflow and [CHANGELOG.md](CHANGELOG.md) for release notes.
+## Next milestones
+
+1. ONNX Runtime worker
+2. Async batch timer (`batch_timeout_ms`)
+3. gRPC serve surface
+4. Prometheus metrics export
+
+See [CHANGELOG.md](CHANGELOG.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
