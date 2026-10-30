@@ -19,7 +19,6 @@ async fn main() -> Result<()> {
 
     let metrics = Arc::new(Metrics::default());
 
-    // Optional: LUMINA_METRICS_ADDR=127.0.0.1:9090
     if let Ok(addr_str) = std::env::var("LUMINA_METRICS_ADDR") {
         let addr: SocketAddr = addr_str
             .parse()
@@ -61,23 +60,47 @@ async fn main() -> Result<()> {
 
     let demo_cfg = EngineConfig {
         max_batch_size: 4,
-        worker_slots: workers.len(),
+        worker_slots: workers.len().max(1),
         ..Default::default()
     };
-    let mut demo = InferenceEngine::with_workers(demo_cfg, workers, Arc::clone(&metrics))?;
+    let engine = InferenceEngine::with_workers(demo_cfg, workers, Arc::clone(&metrics))?;
 
     println!(
         "Lumina-Inference {} — workers={} batch_max={} models={}",
         env!("CARGO_PKG_VERSION"),
-        demo.worker_count(),
-        demo.config().max_batch_size,
+        engine.worker_count(),
+        engine.config().max_batch_size,
         registry.list().len()
     );
     #[cfg(feature = "onnx")]
     println!("ONNX feature: enabled");
     #[cfg(not(feature = "onnx"))]
     println!("ONNX feature: disabled (cargo run --features onnx)");
+    #[cfg(feature = "grpc")]
+    println!("gRPC feature: enabled");
+    #[cfg(not(feature = "grpc"))]
+    println!("gRPC feature: disabled (cargo run --features grpc)");
 
+    // Optional long-running gRPC server: LUMINA_GRPC_ADDR=127.0.0.1:50051
+    #[cfg(feature = "grpc")]
+    if let Ok(addr_str) = std::env::var("LUMINA_GRPC_ADDR") {
+        let addr: SocketAddr = addr_str
+            .parse()
+            .map_err(|e| lumina_inference::LuminaError::Config(format!("grpc addr: {e}")))?;
+        println!("gRPC Inference service on {addr}");
+        lumina_inference::serve_grpc(addr, engine)
+            .await
+            .map_err(|e| lumina_inference::LuminaError::Internal(format!("grpc: {e}")))?;
+        return Ok(());
+    }
+
+    #[cfg(not(feature = "grpc"))]
+    if std::env::var("LUMINA_GRPC_ADDR").is_ok() {
+        eprintln!("LUMINA_GRPC_ADDR set but binary built without `--features grpc`");
+    }
+
+    // Demo batch path (default)
+    let mut demo = engine;
     for i in 0..4 {
         let req = InferenceRequest {
             id: format!("req-{i}"),
@@ -107,7 +130,6 @@ async fn main() -> Result<()> {
         m.inference_latency_ms_count
     );
 
-    // Keep process alive briefly if metrics server is up so scrapers can hit it.
     if std::env::var("LUMINA_METRICS_ADDR").is_ok() {
         println!("metrics server running — Ctrl+C to exit (or wait 30s)");
         tokio::time::sleep(std::time::Duration::from_secs(30)).await;
