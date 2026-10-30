@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1] - 2026-10-30
+
+### Added
+- In-process `Metrics` counters (requests, batches, items, errors)
+- `ModelRegistry` for versioned model ids
+- `AsyncInferenceEngine` with batch-timeout flush via Tokio
+- CLI prints metrics snapshot after demo run
+
+### Changed
+- `InferenceEngine` records metrics on submit/flush
+- `LuminaError` is `Clone` for async reply fan-out
+
 ## [0.1.0] - 2026-10-30
 
 ### Added — Rust engine scaffold
@@ -9,9 +21,6 @@
 - `InferenceEngine` with batching + round-robin workers
 - CLI binary `lumina` demo run
 - Unit tests for batch fill and engine flush
-
-### Docs
-- `.gitignore`, `STATUS.md`, CONTRIBUTING updates
 
 ## Vision (from README)
 
