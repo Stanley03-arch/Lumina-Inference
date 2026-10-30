@@ -1,16 +1,19 @@
 # Changelog
 
-## [0.1.9] - 2026-10-30
+## [0.1.10] - 2026-10-30
 
 ### Added
-- **Multi-node worker discovery**: `WorkerNode`, `WorkerRegistry`, `StaticPeerList`
-- Env loaders: `LUMINA_WORKERS`, `LUMINA_WORKERS_FILE`, `LUMINA_WORKER_TTL_SECS`
-- `RemoteWorker` — gRPC-backed `InferenceWorker` for peers
-- Round-robin `pick`, heartbeat, TTL reap
-- `docs/DISCOVERY.md`
+- Full ONNX dtype encode/decode: **f32, f64, i64, i32, u8**
+- `TensorSpec::{f64,i64,i32,u8}` helpers
+- `IoBinding::single(..., dtype)`
+- Typed output extraction from session results
 
 ### Changed
-- Package version **0.1.9**
+- Package version **0.1.10**
+
+## [0.1.9] - 2026-10-30
+
+- Multi-node worker discovery + RemoteWorker
 
 ## [0.1.8] - 2026-10-30
 
@@ -18,4 +21,4 @@
 
 ## [0.1.7] — [0.1.0]
 
-- gRPC, metrics, ONNX, engine scaffold
+- gRPC, metrics, engine scaffold
