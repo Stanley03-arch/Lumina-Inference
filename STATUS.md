@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.3)
+## Current state (v0.1.4)
 
 | Piece | Status |
 |-------|--------|
@@ -13,9 +13,9 @@
 | ONNX Runtime worker | ✅ (`--features onnx`) |
 | Model registry | ✅ |
 | Async engine + timeout flush | ✅ |
-| **Prometheus `/metrics`** | ✅ |
+| Prometheus `/metrics` | ✅ |
+| **gRPC Inference API** | ✅ (`--features grpc`) |
 | CLI `lumina` | ✅ |
-| gRPC serve | 🔜 |
 
 ## Verify
 
@@ -23,15 +23,18 @@
 cargo test
 cargo run --bin lumina
 
-# Metrics endpoint
+# Metrics
 LUMINA_METRICS_ADDR=127.0.0.1:9090 cargo run --bin lumina
-curl -s http://127.0.0.1:9090/metrics
+
+# gRPC (requires protoc)
+cargo build --features grpc
+LUMINA_GRPC_ADDR=127.0.0.1:50051 cargo run --features grpc --bin lumina
 ```
 
-See [docs/METRICS.md](docs/METRICS.md) and [docs/ONNX.md](docs/ONNX.md).
+Docs: [GRPC](docs/GRPC.md) · [METRICS](docs/METRICS.md) · [ONNX](docs/ONNX.md)
 
 ## Next milestones
 
-1. gRPC serve surface
-2. Named ONNX I/O tensor mapping
+1. Named ONNX I/O tensor mapping
+2. gRPC reflection / richer client examples
 3. Multi-node worker discovery
