@@ -2,7 +2,7 @@ use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, LuminaError>;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum LuminaError {
     #[error("configuration error: {0}")]
     Config(String),
