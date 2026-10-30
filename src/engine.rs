@@ -1,7 +1,9 @@
 use crate::batch::{BatchAccumulator, InferenceRequest, InferenceResponse};
 use crate::config::EngineConfig;
 use crate::error::Result;
+use crate::metrics::{Metrics, MetricsSnapshot};
 use crate::worker::LocalWorker;
+use std::sync::Arc;
 use tracing::{info, instrument};
 
 /// Central coordinator: accumulate → flush → worker.
@@ -10,10 +12,15 @@ pub struct InferenceEngine {
     batch: BatchAccumulator,
     workers: Vec<LocalWorker>,
     next_worker: usize,
+    metrics: Arc<Metrics>,
 }
 
 impl InferenceEngine {
     pub fn new(cfg: EngineConfig) -> Result<Self> {
+        Self::with_metrics(cfg, Arc::new(Metrics::default()))
+    }
+
+    pub fn with_metrics(cfg: EngineConfig, metrics: Arc<Metrics>) -> Result<Self> {
         cfg.validate()?;
         let batch = BatchAccumulator::new(&cfg);
         let workers = (0..cfg.worker_slots)
@@ -24,6 +31,7 @@ impl InferenceEngine {
             batch,
             workers,
             next_worker: 0,
+            metrics,
         })
     }
 
@@ -31,10 +39,22 @@ impl InferenceEngine {
         &self.cfg
     }
 
+    pub fn metrics(&self) -> MetricsSnapshot {
+        self.metrics.snapshot()
+    }
+
+    pub fn metrics_handle(&self) -> Arc<Metrics> {
+        Arc::clone(&self.metrics)
+    }
+
     /// Enqueue a request; returns completed batch results when full.
     #[instrument(skip(self, req), fields(id = %req.id, model = %req.model))]
     pub fn submit(&mut self, req: InferenceRequest) -> Result<Option<Vec<InferenceResponse>>> {
-        self.batch.push(req)?;
+        self.metrics.record_request();
+        if let Err(e) = self.batch.push(req) {
+            self.metrics.record_error();
+            return Err(e);
+        }
         if self.batch.is_full() {
             return Ok(Some(self.flush()?));
         }
@@ -47,10 +67,20 @@ impl InferenceEngine {
             return Ok(Vec::new());
         }
         let items = self.batch.take();
+        let n = items.len();
         let worker = &self.workers[self.next_worker % self.workers.len()];
         self.next_worker = self.next_worker.wrapping_add(1);
-        info!(worker = %worker.name, n = items.len(), "running batch");
-        worker.run_batch(&items)
+        info!(worker = %worker.name, n, "running batch");
+        match worker.run_batch(&items) {
+            Ok(out) => {
+                self.metrics.record_batch(n);
+                Ok(out)
+            }
+            Err(e) => {
+                self.metrics.record_error();
+                Err(e)
+            }
+        }
     }
 }
 
@@ -84,5 +114,9 @@ mod tests {
         let out = r2.expect("batch should flush");
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].output, b"hi");
+        let snap = eng.metrics();
+        assert_eq!(snap.requests_total, 2);
+        assert_eq!(snap.batches_total, 1);
+        assert_eq!(snap.batch_items_total, 2);
     }
 }
