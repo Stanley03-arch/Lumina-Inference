@@ -1,7 +1,12 @@
 use lumina_inference::{
-    batch::InferenceRequest, config::EngineConfig, engine::InferenceEngine,
-    registry::{ModelInfo, ModelRegistry}, Result,
+    batch::InferenceRequest,
+    config::EngineConfig,
+    engine::InferenceEngine,
+    registry::{ModelInfo, ModelRegistry},
+    worker::{InferenceWorker, LocalWorker},
+    OnnxWorker, Result,
 };
+use std::sync::Arc;
 use tracing_subscriber::EnvFilter;
 
 fn main() -> Result<()> {
@@ -17,34 +22,62 @@ fn main() -> Result<()> {
         loaded: true,
     });
 
+    // Optional: LUMINA_ONNX_MODEL=/path/to/model.onnx
+    // With --features onnx this uses OnnxWorker; otherwise falls back to echo.
+    let workers: Vec<Box<dyn InferenceWorker>> =
+        if let Ok(path) = std::env::var("LUMINA_ONNX_MODEL") {
+            match OnnxWorker::load("onnx-0", "default", &path) {
+                Ok(w) => {
+                    registry.register(ModelInfo {
+                        id: "default".into(),
+                        version: "onnx".into(),
+                        path: Some(path),
+                        loaded: true,
+                    });
+                    vec![Box::new(w)]
+                }
+                Err(e) => {
+                    eprintln!("ONNX load failed ({e}); using LocalWorker echo backend");
+                    vec![Box::new(LocalWorker::new("worker-0"))]
+                }
+            }
+        } else {
+            vec![Box::new(LocalWorker::new("worker-0"))]
+        };
+
     let demo_cfg = EngineConfig {
         max_batch_size: 4,
-        worker_slots: 2,
+        worker_slots: workers.len(),
         ..Default::default()
     };
-    let mut demo = InferenceEngine::new(demo_cfg)?;
+    let mut demo = InferenceEngine::with_workers(demo_cfg, workers, Arc::new(Default::default()))?;
 
     println!(
         "Lumina-Inference {} — workers={} batch_max={} models={}",
         env!("CARGO_PKG_VERSION"),
-        demo.config().worker_slots,
+        demo.worker_count(),
         demo.config().max_batch_size,
         registry.list().len()
     );
+    #[cfg(feature = "onnx")]
+    println!("ONNX feature: enabled");
+    #[cfg(not(feature = "onnx"))]
+    println!("ONNX feature: disabled (cargo run --features onnx)");
 
     for i in 0..4 {
         let req = InferenceRequest {
             id: format!("req-{i}"),
             model: demo.config().default_model.clone(),
-            input: format!("token-{i}").into_bytes(),
+            // f32 LE payload for ONNX path; echo path accepts any bytes
+            input: (i as f32).to_le_bytes().to_vec(),
         };
         if let Some(batch) = demo.submit(req)? {
             for resp in batch {
                 println!(
-                    "  {} model={} out={} latency_ms={}",
+                    "  {} model={} out_len={} latency_ms={}",
                     resp.id,
                     resp.model,
-                    String::from_utf8_lossy(&resp.output),
+                    resp.output.len(),
                     resp.latency_ms
                 );
             }
