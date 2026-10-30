@@ -1,5 +1,6 @@
 use crate::batch::{InferenceRequest, InferenceResponse};
 use crate::error::Result;
+use crate::tensor::NamedTensors;
 use std::time::Instant;
 
 /// Pluggable inference backend (echo, ONNX, remote, …).
@@ -33,6 +34,7 @@ impl InferenceWorker for LocalWorker {
                 model: req.model.clone(),
                 output: req.input.clone(),
                 latency_ms: start.elapsed().as_millis() as u64,
+                named_outputs: NamedTensors::default(),
             });
         }
         Ok(out)
