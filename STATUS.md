@@ -2,32 +2,28 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.9)
+## Current state (v0.1.10)
 
 | Piece | Status |
 |-------|--------|
 | Engine + batching + metrics | ✅ |
 | ONNX + named tensors | ✅ |
+| **ONNX dtypes f32/f64/i64/i32/u8** | ✅ |
 | Prometheus `/metrics` | ✅ |
 | gRPC server / client / reflection | ✅ |
-| **Multi-node worker discovery** | ✅ |
-| RemoteWorker (gRPC peer) | ✅ |
+| Multi-node discovery + RemoteWorker | ✅ |
 | CLI | ✅ |
 
 ## Verify
 
 ```bash
 cargo test
-
-# Two nodes example
-LUMINA_GRPC_ADDR=127.0.0.1:50051 cargo run --features grpc --bin lumina
-LUMINA_WORKERS="a=http://127.0.0.1:50051" cargo test
+cargo run --bin lumina
 ```
 
-Docs: [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md) · [METRICS](docs/METRICS.md)
+Docs: [ONNX](docs/ONNX.md) · [DISCOVERY](docs/DISCOVERY.md) · [GRPC](docs/GRPC.md) · [METRICS](docs/METRICS.md)
 
 ## Next milestones
 
-1. Richer ONNX dtypes (f64 / i64)
-2. Dynamic discovery (mDNS / gossip)
-3. Load-aware scheduling
+1. Dynamic discovery (mDNS / gossip)
+2. Load-aware scheduling
