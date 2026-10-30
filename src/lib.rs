@@ -4,6 +4,7 @@
 //! pluggable model worker interface. gRPC / ONNX bindings will land in
 //! later milestones.
 
+pub mod async_engine;
 pub mod batch;
 pub mod config;
 pub mod engine;
@@ -12,6 +13,7 @@ pub mod metrics;
 pub mod registry;
 pub mod worker;
 
+pub use async_engine::AsyncInferenceEngine;
 pub use config::EngineConfig;
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
