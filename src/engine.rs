@@ -2,7 +2,7 @@ use crate::batch::{BatchAccumulator, InferenceRequest, InferenceResponse};
 use crate::config::EngineConfig;
 use crate::error::Result;
 use crate::metrics::{Metrics, MetricsSnapshot};
-use crate::worker::LocalWorker;
+use crate::worker::{InferenceWorker, LocalWorker};
 use std::sync::Arc;
 use tracing::{info, instrument};
 
@@ -10,7 +10,7 @@ use tracing::{info, instrument};
 pub struct InferenceEngine {
     cfg: EngineConfig,
     batch: BatchAccumulator,
-    workers: Vec<LocalWorker>,
+    workers: Vec<Box<dyn InferenceWorker>>,
     next_worker: usize,
     metrics: Arc<Metrics>,
 }
@@ -23,9 +23,31 @@ impl InferenceEngine {
     pub fn with_metrics(cfg: EngineConfig, metrics: Arc<Metrics>) -> Result<Self> {
         cfg.validate()?;
         let batch = BatchAccumulator::new(&cfg);
-        let workers = (0..cfg.worker_slots)
-            .map(|i| LocalWorker::new(format!("worker-{i}")))
+        let workers: Vec<Box<dyn InferenceWorker>> = (0..cfg.worker_slots)
+            .map(|i| Box::new(LocalWorker::new(format!("worker-{i}"))) as Box<dyn InferenceWorker>)
             .collect();
+        Ok(Self {
+            cfg,
+            batch,
+            workers,
+            next_worker: 0,
+            metrics,
+        })
+    }
+
+    /// Build an engine with an explicit worker pool (e.g. ONNX workers).
+    pub fn with_workers(
+        cfg: EngineConfig,
+        workers: Vec<Box<dyn InferenceWorker>>,
+        metrics: Arc<Metrics>,
+    ) -> Result<Self> {
+        cfg.validate()?;
+        if workers.is_empty() {
+            return Err(crate::LuminaError::Config(
+                "at least one worker is required".into(),
+            ));
+        }
+        let batch = BatchAccumulator::new(&cfg);
         Ok(Self {
             cfg,
             batch,
@@ -45,6 +67,10 @@ impl InferenceEngine {
 
     pub fn metrics_handle(&self) -> Arc<Metrics> {
         Arc::clone(&self.metrics)
+    }
+
+    pub fn worker_count(&self) -> usize {
+        self.workers.len()
     }
 
     /// Enqueue a request; returns completed batch results when full.
@@ -68,9 +94,10 @@ impl InferenceEngine {
         }
         let items = self.batch.take();
         let n = items.len();
-        let worker = &self.workers[self.next_worker % self.workers.len()];
+        let idx = self.next_worker % self.workers.len();
         self.next_worker = self.next_worker.wrapping_add(1);
-        info!(worker = %worker.name, n, "running batch");
+        let worker = &self.workers[idx];
+        info!(worker = %worker.name(), n, "running batch");
         match worker.run_batch(&items) {
             Ok(out) => {
                 self.metrics.record_batch(n);
