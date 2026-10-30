@@ -8,8 +8,12 @@ pub mod batch;
 pub mod config;
 pub mod engine;
 pub mod error;
+pub mod metrics;
+pub mod registry;
 pub mod worker;
 
 pub use config::EngineConfig;
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
+pub use metrics::{Metrics, MetricsSnapshot};
+pub use registry::{ModelInfo, ModelRegistry};
