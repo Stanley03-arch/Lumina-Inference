@@ -2,35 +2,37 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.1)
+## Current state (v0.1.2)
 
 | Piece | Status |
 |-------|--------|
-| `Cargo.toml` | ✅ |
-| Config + errors | ✅ |
+| Config + errors + metrics | ✅ |
 | Batch accumulator | ✅ |
-| Local echo worker | ✅ (stand-in for ONNX) |
-| InferenceEngine | ✅ |
-| Metrics counters | ✅ |
+| `InferenceWorker` trait | ✅ |
+| Local echo worker | ✅ |
+| **ONNX Runtime worker** | ✅ (`--features onnx`) |
 | Model registry | ✅ |
 | Async engine + timeout flush | ✅ |
 | CLI `lumina` | ✅ |
-| gRPC / ONNX / Prometheus export | 🔜 next milestones |
+| Prometheus `/metrics` | 🔜 |
+| gRPC serve | 🔜 |
 
 ## Verify
 
 ```bash
-git clone https://github.com/Stanley03-arch/Lumina-Inference.git
-cd Lumina-Inference
 cargo test
 cargo run --bin lumina
+
+# With ONNX Runtime
+cargo run --features onnx --bin lumina
+LUMINA_ONNX_MODEL=/path/to/model.onnx cargo run --features onnx --bin lumina
 ```
+
+See [docs/ONNX.md](docs/ONNX.md).
 
 ## Next milestones
 
-1. ONNX Runtime worker
-2. Prometheus `/metrics` HTTP export
-3. gRPC serve surface
+1. Prometheus `/metrics` HTTP export
+2. gRPC serve surface
+3. Named ONNX I/O tensor mapping
 4. Multi-node worker discovery
-
-See [CHANGELOG.md](CHANGELOG.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
