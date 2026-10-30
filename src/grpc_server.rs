@@ -6,6 +6,7 @@ use crate::engine::InferenceEngine;
 use crate::error::LuminaError;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 use tracing::info;
@@ -37,6 +38,10 @@ impl InferenceService {
 
     pub fn from_shared(engine: Arc<Mutex<InferenceEngine>>) -> Self {
         Self { engine }
+    }
+
+    pub fn engine_handle(&self) -> Arc<Mutex<InferenceEngine>> {
+        Arc::clone(&self.engine)
     }
 }
 
@@ -163,11 +168,99 @@ fn uuid_like() -> String {
 }
 
 fn reflection_service(
-) -> Result<tonic_reflection::server::ServerReflectionServer<impl tonic_reflection::server::ServerReflection>, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<
+    tonic_reflection::server::ServerReflectionServer<impl tonic_reflection::server::ServerReflection>,
+    Box<dyn std::error::Error + Send + Sync>,
+> {
     let svc = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(pb::FILE_DESCRIPTOR_SET)
         .build_v1()?;
     Ok(svc)
+}
+
+/// Tunables for the gRPC server.
+#[derive(Debug, Clone)]
+pub struct GrpcServerConfig {
+    pub addr: SocketAddr,
+    /// Max concurrent requests (tonic concurrency limit). `None` = unlimited.
+    pub concurrency_limit: Option<usize>,
+    /// TCP / HTTP2 keepalive interval.
+    pub tcp_keepalive: Option<Duration>,
+}
+
+impl GrpcServerConfig {
+    pub fn new(addr: SocketAddr) -> Self {
+        Self {
+            addr,
+            concurrency_limit: Some(256),
+            tcp_keepalive: Some(Duration::from_secs(60)),
+        }
+    }
+}
+
+/// Builder that owns the engine and starts Inference + reflection.
+pub struct GrpcServer {
+    cfg: GrpcServerConfig,
+    service: InferenceService,
+}
+
+impl GrpcServer {
+    pub fn new(cfg: GrpcServerConfig, engine: InferenceEngine) -> Self {
+        Self {
+            cfg,
+            service: InferenceService::new(engine),
+        }
+    }
+
+    pub fn from_shared(cfg: GrpcServerConfig, engine: Arc<Mutex<InferenceEngine>>) -> Self {
+        Self {
+            cfg,
+            service: InferenceService::from_shared(engine),
+        }
+    }
+
+    pub fn service(&self) -> &InferenceService {
+        &self.service
+    }
+
+    /// Serve until the process is killed.
+    pub async fn serve(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.serve_with_shutdown(std::future::pending::<()>()).await
+    }
+
+    /// Serve until `signal` completes (e.g. ctrl_c).
+    pub async fn serve_with_shutdown<F>(
+        self,
+        signal: F,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        let reflection = reflection_service()?;
+        let addr = self.cfg.addr;
+        let mut builder = tonic::transport::Server::builder();
+
+        if let Some(n) = self.cfg.concurrency_limit {
+            builder = builder.concurrency_limit_per_connection(n);
+        }
+        if let Some(ka) = self.cfg.tcp_keepalive {
+            builder = builder.tcp_keepalive(Some(ka));
+        }
+
+        info!(
+            %addr,
+            concurrency = ?self.cfg.concurrency_limit,
+            "gRPC Inference + reflection listening"
+        );
+
+        builder
+            .add_service(InferenceServer::new(self.service))
+            .add_service(reflection)
+            .serve_with_shutdown(addr, signal)
+            .await?;
+        info!(%addr, "gRPC server shut down");
+        Ok(())
+    }
 }
 
 /// Bind and serve the Inference gRPC API with server reflection.
@@ -175,15 +268,9 @@ pub async fn serve_grpc(
     addr: SocketAddr,
     engine: InferenceEngine,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let svc = InferenceService::new(engine);
-    let reflection = reflection_service()?;
-    info!(%addr, "gRPC Inference + reflection listening");
-    tonic::transport::Server::builder()
-        .add_service(InferenceServer::new(svc))
-        .add_service(reflection)
-        .serve(addr)
-        .await?;
-    Ok(())
+    GrpcServer::new(GrpcServerConfig::new(addr), engine)
+        .serve()
+        .await
 }
 
 /// Serve using a shared engine (e.g. alongside metrics), with reflection.
@@ -191,13 +278,21 @@ pub async fn serve_grpc_shared(
     addr: SocketAddr,
     engine: Arc<Mutex<InferenceEngine>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let svc = InferenceService::from_shared(engine);
-    let reflection = reflection_service()?;
-    info!(%addr, "gRPC Inference + reflection listening");
-    tonic::transport::Server::builder()
-        .add_service(InferenceServer::new(svc))
-        .add_service(reflection)
-        .serve(addr)
-        .await?;
-    Ok(())
+    GrpcServer::from_shared(GrpcServerConfig::new(addr), engine)
+        .serve()
+        .await
+}
+
+/// Serve with graceful shutdown on Ctrl+C.
+pub async fn serve_grpc_ctrl_c(
+    addr: SocketAddr,
+    engine: InferenceEngine,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let server = GrpcServer::new(GrpcServerConfig::new(addr), engine);
+    server
+        .serve_with_shutdown(async {
+            let _ = tokio::signal::ctrl_c().await;
+            info!("Ctrl+C received — shutting down gRPC server");
+        })
+        .await
 }
