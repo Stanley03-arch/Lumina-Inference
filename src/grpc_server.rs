@@ -1,4 +1,5 @@
 //! gRPC serve surface (requires `--features grpc` and `protoc` at build time).
+//! Includes server reflection so tools like `grpcurl` work without local protos.
 
 use crate::batch::InferenceRequest;
 use crate::engine::InferenceEngine;
@@ -11,6 +12,10 @@ use tracing::info;
 
 pub mod pb {
     tonic::include_proto!("lumina.v1");
+
+    /// Encoded FileDescriptorSet for gRPC reflection.
+    pub const FILE_DESCRIPTOR_SET: &[u8] =
+        tonic::include_file_descriptor_set!("lumina_descriptor");
 }
 
 use pb::inference_server::{Inference, InferenceServer};
@@ -70,7 +75,6 @@ impl Inference for InferenceService {
                 Ok(Response::new(to_proto(resp)))
             }
             Ok(None) => {
-                // Partial batch: flush this single item path for low-latency unary RPC
                 let batch = eng.flush().map_err(to_status)?;
                 let resp = batch.into_iter().next().ok_or_else(|| {
                     Status::internal("flush returned empty after unary submit")
@@ -110,7 +114,6 @@ impl Inference for InferenceService {
                 None => {}
             }
         }
-        // Flush remainder
         let rest = eng.flush().map_err(to_status)?;
         responses.extend(rest.into_iter().map(to_proto));
 
@@ -159,26 +162,41 @@ fn uuid_like() -> String {
     format!("req-{t}")
 }
 
-/// Bind and serve the Inference gRPC API.
-pub async fn serve_grpc(addr: SocketAddr, engine: InferenceEngine) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+fn reflection_service(
+) -> Result<tonic_reflection::server::ServerReflectionServer<impl tonic_reflection::server::ServerReflection>, Box<dyn std::error::Error + Send + Sync>> {
+    let svc = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(pb::FILE_DESCRIPTOR_SET)
+        .build_v1()?;
+    Ok(svc)
+}
+
+/// Bind and serve the Inference gRPC API with server reflection.
+pub async fn serve_grpc(
+    addr: SocketAddr,
+    engine: InferenceEngine,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let svc = InferenceService::new(engine);
-    info!(%addr, "gRPC Inference service listening");
+    let reflection = reflection_service()?;
+    info!(%addr, "gRPC Inference + reflection listening");
     tonic::transport::Server::builder()
         .add_service(InferenceServer::new(svc))
+        .add_service(reflection)
         .serve(addr)
         .await?;
     Ok(())
 }
 
-/// Serve using a shared engine (e.g. alongside metrics).
+/// Serve using a shared engine (e.g. alongside metrics), with reflection.
 pub async fn serve_grpc_shared(
     addr: SocketAddr,
     engine: Arc<Mutex<InferenceEngine>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let svc = InferenceService::from_shared(engine);
-    info!(%addr, "gRPC Inference service listening");
+    let reflection = reflection_service()?;
+    info!(%addr, "gRPC Inference + reflection listening");
     tonic::transport::Server::builder()
         .add_service(InferenceServer::new(svc))
+        .add_service(reflection)
         .serve(addr)
         .await?;
     Ok(())
