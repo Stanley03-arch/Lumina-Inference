@@ -16,6 +16,8 @@ pub mod registry;
 pub mod worker;
 
 #[cfg(feature = "grpc")]
+pub mod grpc_client;
+#[cfg(feature = "grpc")]
 pub mod grpc_server;
 
 pub use async_engine::AsyncInferenceEngine;
@@ -28,5 +30,7 @@ pub use prometheus_server::{serve_metrics, spawn_metrics_server};
 pub use registry::{ModelInfo, ModelRegistry};
 pub use worker::{InferenceWorker, LocalWorker};
 
+#[cfg(feature = "grpc")]
+pub use grpc_client::InferenceClient;
 #[cfg(feature = "grpc")]
 pub use grpc_server::{serve_grpc, serve_grpc_shared, InferenceService};
