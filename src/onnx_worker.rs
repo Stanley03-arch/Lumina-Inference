@@ -2,6 +2,7 @@
 //!
 //! Enable with `cargo build --features onnx`.
 //! Supports named input/output tensors via [`IoBinding`].
+//! Dtypes: f32, f64, i64, i32, u8 (little-endian bytes on the wire).
 
 use crate::batch::{InferenceRequest, InferenceResponse};
 use crate::error::{LuminaError, Result};
@@ -16,7 +17,6 @@ pub struct OnnxWorker {
     name: String,
     model_id: String,
     model_path: PathBuf,
-    /// Named I/O mapping; default = single anonymous f32 vector.
     io: IoBinding,
     #[cfg(feature = "onnx")]
     session: ort::session::Session,
@@ -66,8 +66,8 @@ impl OnnxWorker {
             info!(
                 %name,
                 path = %model_path.display(),
-                inputs = ?io.inputs.iter().map(|t| &t.name).collect::<Vec<_>>(),
-                outputs = ?io.outputs.iter().map(|t| &t.name).collect::<Vec<_>>(),
+                inputs = ?io.inputs.iter().map(|t| (&t.name, t.dtype.as_str())).collect::<Vec<_>>(),
+                outputs = ?io.outputs.iter().map(|t| (&t.name, t.dtype.as_str())).collect::<Vec<_>>(),
                 "loading ONNX session"
             );
             let session = ort::session::Session::builder()
@@ -118,7 +118,6 @@ fn bytes_for_input(req: &InferenceRequest, spec: &TensorSpec) -> Result<Vec<u8>>
     if let Some(data) = req.named_inputs.get(&spec.name) {
         return Ok(data.to_vec());
     }
-    // Fallback: primary input field for the first declared tensor.
     if !req.input.is_empty() {
         return Ok(req.input.clone());
     }
@@ -132,8 +131,11 @@ fn resolve_shape(spec: &TensorSpec, nbytes: usize) -> Result<Vec<usize>> {
     let es = spec.dtype.element_size();
     if nbytes % es != 0 {
         return Err(LuminaError::Inference(format!(
-            "tensor '{}': {} bytes not divisible by element size {}",
-            spec.name, nbytes, es
+            "tensor '{}': {} bytes not divisible by element size {} ({})",
+            spec.name,
+            nbytes,
+            es,
+            spec.dtype.as_str()
         )));
     }
     let nelem = nbytes / es;
@@ -148,7 +150,6 @@ fn resolve_shape(spec: &TensorSpec, nbytes: usize) -> Result<Vec<usize>> {
 
     if dynamic == 0 {
         if fixed != nelem && !shape.is_empty() {
-            // Allow override: reshape to [1, nelem] when static shape mismatches.
             return Ok(vec![1, nelem]);
         }
         if shape.is_empty() {
@@ -157,7 +158,7 @@ fn resolve_shape(spec: &TensorSpec, nbytes: usize) -> Result<Vec<usize>> {
         return Ok(shape);
     }
     if dynamic == 1 {
-        let dyn_len = if fixed == 0 { nelem } else { nelem / fixed };
+        let dyn_len = if fixed == 0 { nelem } else { nelem / fixed.max(1) };
         for d in &mut shape {
             if *d == 0 {
                 *d = dyn_len;
@@ -171,29 +172,51 @@ fn resolve_shape(spec: &TensorSpec, nbytes: usize) -> Result<Vec<usize>> {
     )))
 }
 
+macro_rules! decode_le {
+    ($bytes:expr, $ty:ty, $width:expr) => {{
+        $bytes
+            .chunks_exact($width)
+            .map(|c| {
+                let mut arr = [0u8; $width];
+                arr.copy_from_slice(c);
+                <$ty>::from_le_bytes(arr)
+            })
+            .collect::<Vec<$ty>>()
+    }};
+}
+
 #[cfg(feature = "onnx")]
-fn tensor_from_bytes(
-    spec: &TensorSpec,
-    bytes: &[u8],
-) -> Result<ort::value::Value> {
+fn tensor_from_bytes(spec: &TensorSpec, bytes: &[u8]) -> Result<ort::value::Value> {
     let shape = resolve_shape(spec, bytes.len())?;
+    let name = &spec.name;
     match spec.dtype {
         TensorDType::F32 => {
-            let data: Vec<f32> = bytes
-                .chunks_exact(4)
-                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-                .collect();
+            let data = decode_le!(bytes, f32, 4);
             ort::value::Tensor::from_array((shape, data))
                 .map(|t| t.into())
-                .map_err(|e| LuminaError::Inference(format!("tensor {}: {e}", spec.name)))
+                .map_err(|e| LuminaError::Inference(format!("tensor {name}: {e}")))
+        }
+        TensorDType::F64 => {
+            let data = decode_le!(bytes, f64, 8);
+            ort::value::Tensor::from_array((shape, data))
+                .map(|t| t.into())
+                .map_err(|e| LuminaError::Inference(format!("tensor {name}: {e}")))
+        }
+        TensorDType::I64 => {
+            let data = decode_le!(bytes, i64, 8);
+            ort::value::Tensor::from_array((shape, data))
+                .map(|t| t.into())
+                .map_err(|e| LuminaError::Inference(format!("tensor {name}: {e}")))
+        }
+        TensorDType::I32 => {
+            let data = decode_le!(bytes, i32, 4);
+            ort::value::Tensor::from_array((shape, data))
+                .map(|t| t.into())
+                .map_err(|e| LuminaError::Inference(format!("tensor {name}: {e}")))
         }
         TensorDType::U8 => ort::value::Tensor::from_array((shape, bytes.to_vec()))
             .map(|t| t.into())
-            .map_err(|e| LuminaError::Inference(format!("tensor {}: {e}", spec.name))),
-        other => Err(LuminaError::Inference(format!(
-            "dtype {:?} not yet wired for input '{}'",
-            other, spec.name
-        ))),
+            .map_err(|e| LuminaError::Inference(format!("tensor {name}: {e}"))),
     }
 }
 
@@ -202,10 +225,52 @@ fn extract_output_bytes(val: &ort::value::Value) -> Vec<u8> {
     if let Ok((_shape, data)) = val.try_extract_tensor::<f32>() {
         return data.iter().flat_map(|f| f.to_le_bytes()).collect();
     }
+    if let Ok((_shape, data)) = val.try_extract_tensor::<f64>() {
+        return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+    }
+    if let Ok((_shape, data)) = val.try_extract_tensor::<i64>() {
+        return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+    }
+    if let Ok((_shape, data)) = val.try_extract_tensor::<i32>() {
+        return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+    }
     if let Ok((_shape, data)) = val.try_extract_tensor::<u8>() {
         return data.to_vec();
     }
     b"onnx-output".to_vec()
+}
+
+/// Prefer extracting with the dtype declared in the output TensorSpec.
+#[cfg(feature = "onnx")]
+fn extract_output_bytes_typed(val: &ort::value::Value, dtype: TensorDType) -> Vec<u8> {
+    match dtype {
+        TensorDType::F32 => {
+            if let Ok((_s, data)) = val.try_extract_tensor::<f32>() {
+                return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+            }
+        }
+        TensorDType::F64 => {
+            if let Ok((_s, data)) = val.try_extract_tensor::<f64>() {
+                return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+            }
+        }
+        TensorDType::I64 => {
+            if let Ok((_s, data)) = val.try_extract_tensor::<i64>() {
+                return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+            }
+        }
+        TensorDType::I32 => {
+            if let Ok((_s, data)) = val.try_extract_tensor::<i32>() {
+                return data.iter().flat_map(|f| f.to_le_bytes()).collect();
+            }
+        }
+        TensorDType::U8 => {
+            if let Ok((_s, data)) = val.try_extract_tensor::<u8>() {
+                return data.to_vec();
+            }
+        }
+    }
+    extract_output_bytes(val)
 }
 
 impl InferenceWorker for OnnxWorker {
@@ -228,7 +293,6 @@ impl InferenceWorker for OnnxWorker {
         {
             let mut out = Vec::with_capacity(batch.len());
             for req in batch {
-                // Build named inputs from binding + request
                 let mut session_inputs: Vec<(String, ort::value::Value)> = Vec::new();
                 for (i, spec) in self.io.inputs.iter().enumerate() {
                     let bytes = if i == 0 {
@@ -263,7 +327,6 @@ impl InferenceWorker for OnnxWorker {
                 let mut primary = Vec::new();
 
                 if self.io.outputs.is_empty() {
-                    // Take first session output
                     if let Some((name, val)) = outputs.iter().next() {
                         let bytes = extract_output_bytes(val);
                         named.insert(name.to_string(), bytes.clone());
@@ -273,12 +336,11 @@ impl InferenceWorker for OnnxWorker {
                     for (i, spec) in self.io.outputs.iter().enumerate() {
                         let bytes = outputs
                             .get(spec.name.as_str())
-                            .map(extract_output_bytes)
+                            .map(|v| extract_output_bytes_typed(v, spec.dtype))
                             .or_else(|| {
-                                outputs
-                                    .iter()
-                                    .nth(i)
-                                    .map(|(_, v)| extract_output_bytes(v))
+                                outputs.iter().nth(i).map(|(_, v)| {
+                                    extract_output_bytes_typed(v, spec.dtype)
+                                })
                             })
                             .unwrap_or_default();
                         if i == 0 {
@@ -313,10 +375,17 @@ mod tests {
     }
 
     #[test]
-    fn resolve_shape_dynamic() {
-        let spec = TensorSpec::f32("x", vec![1, -1]);
-        let shape = resolve_shape(&spec, 16).unwrap(); // 4 f32s
-        assert_eq!(shape, vec![1, 4]);
+    fn resolve_shape_f64() {
+        let spec = TensorSpec::f64("x", vec![1, -1]);
+        let shape = resolve_shape(&spec, 24).unwrap(); // 3 f64s
+        assert_eq!(shape, vec![1, 3]);
+    }
+
+    #[test]
+    fn resolve_shape_i64() {
+        let spec = TensorSpec::i64("ids", vec![-1]);
+        let shape = resolve_shape(&spec, 16).unwrap(); // 2 i64s
+        assert_eq!(shape, vec![2]);
     }
 
     #[test]
