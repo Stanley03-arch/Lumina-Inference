@@ -36,7 +36,6 @@ impl InferenceEngine {
         })
     }
 
-    /// Build an engine with an explicit worker pool (e.g. ONNX workers).
     pub fn with_workers(
         cfg: EngineConfig,
         workers: Vec<Box<dyn InferenceWorker>>,
@@ -74,7 +73,6 @@ impl InferenceEngine {
         self.workers.len()
     }
 
-    /// Enqueue a request; returns completed batch results when full.
     #[instrument(skip(self, req), fields(id = %req.id, model = %req.model))]
     pub fn submit(&mut self, req: InferenceRequest) -> Result<Option<Vec<InferenceResponse>>> {
         self.metrics.record_request();
@@ -88,7 +86,6 @@ impl InferenceEngine {
         Ok(None)
     }
 
-    /// Force-run whatever is currently buffered.
     pub fn flush(&mut self) -> Result<Vec<InferenceResponse>> {
         if self.batch.is_empty() {
             return Ok(Vec::new());
@@ -128,19 +125,11 @@ mod tests {
         };
         let mut eng = InferenceEngine::new(cfg).unwrap();
         let r1 = eng
-            .submit(InferenceRequest {
-                id: "a".into(),
-                model: "m".into(),
-                input: b"hi".to_vec(),
-            })
+            .submit(InferenceRequest::new("a", "m", b"hi".to_vec()))
             .unwrap();
         assert!(r1.is_none());
         let r2 = eng
-            .submit(InferenceRequest {
-                id: "b".into(),
-                model: "m".into(),
-                input: b"yo".to_vec(),
-            })
+            .submit(InferenceRequest::new("b", "m", b"yo".to_vec()))
             .unwrap();
         let out = r2.expect("batch should flush");
         assert_eq!(out.len(), 2);
