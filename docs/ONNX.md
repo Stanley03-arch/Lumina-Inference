@@ -6,60 +6,56 @@ Lumina runs models through [ONNX Runtime](https://onnxruntime.ai/) via `--featur
 
 ```bash
 cargo build --features onnx
-cargo run --features onnx --bin lumina
-```
-
-```bash
 export LUMINA_ONNX_MODEL=/path/to/model.onnx
 cargo run --features onnx --bin lumina
 ```
 
-## Named I/O (v0.1.8+)
+## Dtypes (v0.1.10+)
 
-Bind tensor names and shapes with `IoBinding` / `TensorSpec`:
+Wire format is **little-endian** raw bytes.
+
+| DType | Size | Helpers |
+|-------|------|---------|
+| `F32` | 4 | `TensorSpec::f32` |
+| `F64` | 8 | `TensorSpec::f64` |
+| `I64` | 8 | `TensorSpec::i64` |
+| `I32` | 4 | `TensorSpec::i32` |
+| `U8` | 1 | `TensorSpec::u8` |
 
 ```rust
-use lumina_inference::{
-    batch::InferenceRequest,
-    tensor::{IoBinding, NamedTensors, TensorSpec},
-    OnnxWorker,
-};
+use lumina_inference::tensor::{IoBinding, TensorDType, TensorSpec};
 
+// Token ids as i64
 let io = IoBinding {
-    inputs: vec![
-        TensorSpec::f32("images", vec![1, 3, 224, 224]),
-        TensorSpec::f32("mask", vec![1, 1, 224, 224]),
-    ],
-    outputs: vec![TensorSpec::f32("logits", vec![1, 1000])],
+    inputs: vec![TensorSpec::i64("input_ids", vec![1, -1])],
+    outputs: vec![TensorSpec::f32("logits", vec![1, -1, 32000])],
 };
 
-let worker = OnnxWorker::load_with_io("w0", "resnet", "models/resnet.onnx", io)?;
+// Or mixed
+let io = IoBinding::single("x", "y", vec![1, 128], TensorDType::F64);
+```
 
-let mut req = InferenceRequest::new("1", "resnet", vec![]);
-req.named_inputs.insert("images", /* f32 LE bytes */ vec![]);
-req.named_inputs.insert("mask", vec![]);
+## Named I/O
+
+```rust
+use lumina_inference::{batch::InferenceRequest, tensor::NamedTensors, OnnxWorker};
+
+let worker = OnnxWorker::load_with_io("w0", "model", "model.onnx", io)?;
+
+let mut req = InferenceRequest::new("1", "model", vec![]);
+req.named_inputs.insert("input_ids", /* i64 LE bytes */ vec![]);
 ```
 
 ### Defaults
 
-`OnnxWorker::load(...)` uses:
+`OnnxWorker::load(...)` uses input `input` / output `output`, shape `[1, -1]`, dtype **f32**.
 
-- input name: `input`
-- output name: `output`
-- shape: `[1, -1]` (dynamic length from byte payload)
+If `named_inputs` is empty, `request.input` feeds the **first** declared input.
 
-If `named_inputs` is empty, `request.input` is used for the **first** declared input.
+### Dynamic shapes
 
-### Dtypes
-
-| DType | Status |
-|-------|--------|
-| `F32` | ✅ |
-| `U8` | ✅ |
-| `F64` / `I32` / `I64` | reserved |
-
-Dynamic dims: at most **one** `-1`/`0` per tensor; resolved from element count.
+At most **one** `-1`/`0` dim per tensor; resolved from element count.
 
 ## Without the feature
 
-`OnnxWorker::load` works if the file exists, but `run_batch` errors until you rebuild with `--features onnx`.
+`run_batch` errors until you rebuild with `--features onnx`.
