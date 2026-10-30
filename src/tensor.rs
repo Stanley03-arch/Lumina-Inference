@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// How raw request bytes are interpreted.
+/// How raw request bytes are interpreted (little-endian).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum TensorDType {
@@ -22,6 +22,16 @@ impl TensorDType {
             TensorDType::U8 => 1,
         }
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            TensorDType::F32 => "f32",
+            TensorDType::F64 => "f64",
+            TensorDType::I64 => "i64",
+            TensorDType::I32 => "i32",
+            TensorDType::U8 => "u8",
+        }
+    }
 }
 
 /// Description of one model input or output tensor.
@@ -35,12 +45,32 @@ pub struct TensorSpec {
 }
 
 impl TensorSpec {
-    pub fn f32(name: impl Into<String>, shape: Vec<i64>) -> Self {
+    pub fn new(name: impl Into<String>, shape: Vec<i64>, dtype: TensorDType) -> Self {
         Self {
             name: name.into(),
             shape,
-            dtype: TensorDType::F32,
+            dtype,
         }
+    }
+
+    pub fn f32(name: impl Into<String>, shape: Vec<i64>) -> Self {
+        Self::new(name, shape, TensorDType::F32)
+    }
+
+    pub fn f64(name: impl Into<String>, shape: Vec<i64>) -> Self {
+        Self::new(name, shape, TensorDType::F64)
+    }
+
+    pub fn i64(name: impl Into<String>, shape: Vec<i64>) -> Self {
+        Self::new(name, shape, TensorDType::I64)
+    }
+
+    pub fn i32(name: impl Into<String>, shape: Vec<i64>) -> Self {
+        Self::new(name, shape, TensorDType::I32)
+    }
+
+    pub fn u8(name: impl Into<String>, shape: Vec<i64>) -> Self {
+        Self::new(name, shape, TensorDType::U8)
     }
 
     /// Number of elements implied by shape (dynamic dims treated as 1 for capacity hints).
@@ -65,6 +95,14 @@ impl IoBinding {
         Self {
             inputs: vec![TensorSpec::f32(input, shape.clone())],
             outputs: vec![TensorSpec::f32(output, shape)],
+        }
+    }
+
+    /// Single tensor pair with an explicit dtype.
+    pub fn single(input: &str, output: &str, shape: Vec<i64>, dtype: TensorDType) -> Self {
+        Self {
+            inputs: vec![TensorSpec::new(input, shape.clone(), dtype)],
+            outputs: vec![TensorSpec::new(output, shape, dtype)],
         }
     }
 
@@ -102,5 +140,19 @@ impl NamedTensors {
 
     pub fn is_empty(&self) -> bool {
         self.tensors.is_empty()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn element_sizes() {
+        assert_eq!(TensorDType::F32.element_size(), 4);
+        assert_eq!(TensorDType::F64.element_size(), 8);
+        assert_eq!(TensorDType::I64.element_size(), 8);
+        assert_eq!(TensorDType::I32.element_size(), 4);
+        assert_eq!(TensorDType::U8.element_size(), 1);
     }
 }
