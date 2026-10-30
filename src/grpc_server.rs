@@ -4,6 +4,7 @@
 use crate::batch::InferenceRequest;
 use crate::engine::InferenceEngine;
 use crate::error::LuminaError;
+use crate::tensor::NamedTensors;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -45,37 +46,36 @@ impl InferenceService {
     }
 }
 
+fn from_pb(r: PredictRequest) -> InferenceRequest {
+    InferenceRequest {
+        id: if r.id.is_empty() {
+            uuid_like()
+        } else {
+            r.id
+        },
+        model: if r.model.is_empty() {
+            "default".into()
+        } else {
+            r.model
+        },
+        input: r.input,
+        named_inputs: NamedTensors::default(),
+    }
+}
+
 #[tonic::async_trait]
 impl Inference for InferenceService {
     async fn predict(
         &self,
         request: Request<PredictRequest>,
     ) -> std::result::Result<Response<PredictResponse>, Status> {
-        let r = request.into_inner();
-        let req = InferenceRequest {
-            id: if r.id.is_empty() {
-                uuid_like()
-            } else {
-                r.id
-            },
-            model: if r.model.is_empty() {
-                "default".into()
-            } else {
-                r.model
-            },
-            input: r.input,
-        };
+        let req = from_pb(request.into_inner());
 
         let mut eng = self.engine.lock().await;
         match eng.submit(req) {
             Ok(Some(batch)) => {
                 let resp = batch.into_iter().next().unwrap_or_else(|| {
-                    crate::batch::InferenceResponse {
-                        id: String::new(),
-                        model: String::new(),
-                        output: Vec::new(),
-                        latency_ms: 0,
-                    }
+                    crate::batch::InferenceResponse::new(String::new(), String::new(), Vec::new(), 0)
                 });
                 Ok(Response::new(to_proto(resp)))
             }
@@ -99,19 +99,7 @@ impl Inference for InferenceService {
         let mut eng = self.engine.lock().await;
 
         for r in batch_req.requests {
-            let req = InferenceRequest {
-                id: if r.id.is_empty() {
-                    uuid_like()
-                } else {
-                    r.id
-                },
-                model: if r.model.is_empty() {
-                    "default".into()
-                } else {
-                    r.model
-                },
-                input: r.input,
-            };
+            let req = from_pb(r);
             match eng.submit(req).map_err(to_status)? {
                 Some(done) => {
                     responses.extend(done.into_iter().map(to_proto));
@@ -223,12 +211,10 @@ impl GrpcServer {
         &self.service
     }
 
-    /// Serve until the process is killed.
     pub async fn serve(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.serve_with_shutdown(std::future::pending::<()>()).await
     }
 
-    /// Serve until `signal` completes (e.g. ctrl_c).
     pub async fn serve_with_shutdown<F>(
         self,
         signal: F,
@@ -263,7 +249,6 @@ impl GrpcServer {
     }
 }
 
-/// Bind and serve the Inference gRPC API with server reflection.
 pub async fn serve_grpc(
     addr: SocketAddr,
     engine: InferenceEngine,
@@ -273,7 +258,6 @@ pub async fn serve_grpc(
         .await
 }
 
-/// Serve using a shared engine (e.g. alongside metrics), with reflection.
 pub async fn serve_grpc_shared(
     addr: SocketAddr,
     engine: Arc<Mutex<InferenceEngine>>,
@@ -283,7 +267,6 @@ pub async fn serve_grpc_shared(
         .await
 }
 
-/// Serve with graceful shutdown on Ctrl+C.
 pub async fn serve_grpc_ctrl_c(
     addr: SocketAddr,
     engine: InferenceEngine,
