@@ -1,6 +1,6 @@
 [package]
 name = "lumina-inference"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "High-performance distributed inference engine"
 license = "MIT"
@@ -11,8 +11,10 @@ categories = ["science", "asynchronous"]
 
 [features]
 default = []
-# Enable ONNX Runtime worker (requires ONNX Runtime shared libs on the host).
+# ONNX Runtime worker (needs ORT shared libs).
 onnx = ["dep:ort"]
+# gRPC serve surface (needs `protoc` at build time).
+grpc = ["dep:tonic", "dep:prost", "dep:tonic-build"]
 
 [dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util"] }
@@ -22,6 +24,11 @@ thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ort = { version = "2", optional = true, default-features = true }
+tonic = { version = "0.12", optional = true }
+prost = { version = "0.13", optional = true }
+
+[build-dependencies]
+tonic-build = { version = "0.12", optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
