@@ -1,13 +1,19 @@
 # Changelog
 
-## [0.1.6] - 2026-10-30
+## [0.1.7] - 2026-10-30
 
 ### Added
-- **`InferenceClient`** — typed gRPC client (`connect`, `health`, `predict`, `predict_batch`)
-- CLI client mode: `LUMINA_GRPC_CLIENT=http://host:port`
+- **`GrpcServer` / `GrpcServerConfig`** — concurrency limit, TCP keepalive
+- **`serve_grpc_ctrl_c`** — graceful shutdown on Ctrl+C
+- `serve_with_shutdown` for custom stop signals
 
 ### Changed
-- Package version **0.1.6**
+- Package version **0.1.7**
+- CLI server mode uses graceful shutdown
+
+## [0.1.6] - 2026-10-30
+
+- `InferenceClient` + `LUMINA_GRPC_CLIENT`
 
 ## [0.1.5] - 2026-10-30
 
@@ -15,20 +21,8 @@
 
 ## [0.1.4] - 2026-10-30
 
-- gRPC Inference service
+- gRPC Inference service (server)
 
-## [0.1.3] - 2026-10-30
+## [0.1.3] — [0.1.0]
 
-- Prometheus `/metrics`
-
-## [0.1.2] - 2026-10-30
-
-- ONNX worker
-
-## [0.1.1] - 2026-10-30
-
-- Metrics, registry, async engine
-
-## [0.1.0] - 2026-10-30
-
-- Initial scaffold
+- Metrics, ONNX, engine scaffold
