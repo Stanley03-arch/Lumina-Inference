@@ -1,6 +1,6 @@
 [package]
 name = "lumina-inference"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "High-performance distributed inference engine"
 license = "MIT"
@@ -9,6 +9,11 @@ readme = "README.md"
 keywords = ["inference", "ml", "onnx", "grpc", "distributed"]
 categories = ["science", "asynchronous"]
 
+[features]
+default = []
+# Enable ONNX Runtime worker (requires ONNX Runtime shared libs on the host).
+onnx = ["dep:ort"]
+
 [dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 serde = { version = "1", features = ["derive"] }
@@ -16,6 +21,7 @@ serde_json = "1"
 thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ort = { version = "2", optional = true, default-features = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
