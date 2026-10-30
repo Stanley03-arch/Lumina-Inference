@@ -2,17 +2,33 @@ use lumina_inference::{
     batch::InferenceRequest,
     config::EngineConfig,
     engine::InferenceEngine,
+    prometheus_server::spawn_metrics_server,
     registry::{ModelInfo, ModelRegistry},
     worker::{InferenceWorker, LocalWorker},
-    OnnxWorker, Result,
+    Metrics, OnnxWorker, Result,
 };
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing_subscriber::EnvFilter;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("info".parse().unwrap()))
         .init();
+
+    let metrics = Arc::new(Metrics::default());
+
+    // Optional: LUMINA_METRICS_ADDR=127.0.0.1:9090
+    if let Ok(addr_str) = std::env::var("LUMINA_METRICS_ADDR") {
+        let addr: SocketAddr = addr_str
+            .parse()
+            .map_err(|e| lumina_inference::LuminaError::Config(format!("metrics addr: {e}")))?;
+        let bound = spawn_metrics_server(addr, Arc::clone(&metrics))
+            .await
+            .map_err(|e| lumina_inference::LuminaError::Internal(format!("metrics bind: {e}")))?;
+        println!("Prometheus metrics: http://{bound}/metrics");
+    }
 
     let mut registry = ModelRegistry::new();
     registry.register(ModelInfo {
@@ -22,8 +38,6 @@ fn main() -> Result<()> {
         loaded: true,
     });
 
-    // Optional: LUMINA_ONNX_MODEL=/path/to/model.onnx
-    // With --features onnx this uses OnnxWorker; otherwise falls back to echo.
     let workers: Vec<Box<dyn InferenceWorker>> =
         if let Ok(path) = std::env::var("LUMINA_ONNX_MODEL") {
             match OnnxWorker::load("onnx-0", "default", &path) {
@@ -50,7 +64,7 @@ fn main() -> Result<()> {
         worker_slots: workers.len(),
         ..Default::default()
     };
-    let mut demo = InferenceEngine::with_workers(demo_cfg, workers, Arc::new(Default::default()))?;
+    let mut demo = InferenceEngine::with_workers(demo_cfg, workers, Arc::clone(&metrics))?;
 
     println!(
         "Lumina-Inference {} — workers={} batch_max={} models={}",
@@ -68,7 +82,6 @@ fn main() -> Result<()> {
         let req = InferenceRequest {
             id: format!("req-{i}"),
             model: demo.config().default_model.clone(),
-            // f32 LE payload for ONNX path; echo path accepts any bytes
             input: (i as f32).to_le_bytes().to_vec(),
         };
         if let Some(batch) = demo.submit(req)? {
@@ -86,9 +99,20 @@ fn main() -> Result<()> {
 
     let m = demo.metrics();
     println!(
-        "metrics: requests={} batches={} items={} errors={}",
-        m.requests_total, m.batches_total, m.batch_items_total, m.errors_total
+        "metrics: requests={} batches={} items={} errors={} latency_count={}",
+        m.requests_total,
+        m.batches_total,
+        m.batch_items_total,
+        m.errors_total,
+        m.inference_latency_ms_count
     );
-    println!("demo complete");
+
+    // Keep process alive briefly if metrics server is up so scrapers can hit it.
+    if std::env::var("LUMINA_METRICS_ADDR").is_ok() {
+        println!("metrics server running — Ctrl+C to exit (or wait 30s)");
+        tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+    } else {
+        println!("demo complete");
+    }
     Ok(())
 }
