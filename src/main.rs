@@ -94,13 +94,14 @@ async fn main() -> Result<()> {
     #[cfg(not(feature = "grpc"))]
     println!("gRPC feature: disabled (cargo run --features grpc)");
 
+    // Server mode: LUMINA_GRPC_ADDR=127.0.0.1:50051 (Ctrl+C to stop)
     #[cfg(feature = "grpc")]
     if let Ok(addr_str) = std::env::var("LUMINA_GRPC_ADDR") {
         let addr: SocketAddr = addr_str
             .parse()
             .map_err(|e| lumina_inference::LuminaError::Config(format!("grpc addr: {e}")))?;
-        println!("gRPC Inference service on {addr}");
-        lumina_inference::serve_grpc(addr, engine)
+        println!("gRPC Inference service on {addr} (Ctrl+C to stop)");
+        lumina_inference::serve_grpc_ctrl_c(addr, engine)
             .await
             .map_err(|e| lumina_inference::LuminaError::Internal(format!("grpc: {e}")))?;
         return Ok(());
