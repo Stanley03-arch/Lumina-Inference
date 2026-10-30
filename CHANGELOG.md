@@ -1,24 +1,21 @@
 # Changelog
 
-## [0.1.8] - 2026-10-30
+## [0.1.9] - 2026-10-30
 
 ### Added
-- **Named ONNX I/O**: `TensorSpec`, `IoBinding`, `NamedTensors`
-- `OnnxWorker::load_with_io` for multi-input/output models
-- `InferenceRequest.named_inputs` / `InferenceResponse.named_outputs`
-- Dynamic shape resolution (one dynamic dim per tensor)
+- **Multi-node worker discovery**: `WorkerNode`, `WorkerRegistry`, `StaticPeerList`
+- Env loaders: `LUMINA_WORKERS`, `LUMINA_WORKERS_FILE`, `LUMINA_WORKER_TTL_SECS`
+- `RemoteWorker` — gRPC-backed `InferenceWorker` for peers
+- Round-robin `pick`, heartbeat, TTL reap
+- `docs/DISCOVERY.md`
 
 ### Changed
-- Package version **0.1.8**
+- Package version **0.1.9**
 
-## [0.1.7] - 2026-10-30
+## [0.1.8] - 2026-10-30
 
-- `GrpcServer` builder + Ctrl+C shutdown
+- Named ONNX I/O tensors
 
-## [0.1.6] - 2026-10-30
+## [0.1.7] — [0.1.0]
 
-- gRPC client
-
-## [0.1.5] — [0.1.0]
-
-- Reflection, server, metrics, ONNX, scaffold
+- gRPC, metrics, ONNX, engine scaffold
