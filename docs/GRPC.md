@@ -2,6 +2,8 @@
 
 Lumina exposes a gRPC **Inference** service (package `lumina.v1`) when built with the `grpc` feature.
 
+**Server reflection is enabled by default** — `grpcurl` can list services and call RPCs without local `.proto` files.
+
 ## Requirements
 
 - [Protocol Buffers compiler](https://grpc.io/docs/protoc-installation/) (`protoc`) on `PATH` at **build** time
@@ -19,7 +21,6 @@ cargo run --features grpc --bin lumina
 
 ```bash
 export LUMINA_GRPC_ADDR=127.0.0.1:50051
-# optional metrics alongside demo (gRPC mode serves until killed)
 cargo run --features grpc --bin lumina
 ```
 
@@ -57,6 +58,26 @@ Proto: [`proto/lumina/v1/inference.proto`](../proto/lumina/v1/inference.proto)
 | `output` | bytes |
 | `latency_ms` | uint64 |
 
+## Reflection
+
+The server registers a `FileDescriptorSet` via `tonic-reflection` so clients can discover methods at runtime.
+
+```bash
+# List services (no -proto needed)
+grpcurl -plaintext 127.0.0.1:50051 list
+
+# Describe a method
+grpcurl -plaintext 127.0.0.1:50051 describe lumina.v1.Inference.Predict
+
+# Call Health
+grpcurl -plaintext -d '{}' 127.0.0.1:50051 lumina.v1.Inference/Health
+
+# Call Predict (base64 for bytes field)
+grpcurl -plaintext \
+  -d '{"id":"1","model":"default","input":"AAAAAA=="}' \
+  127.0.0.1:50051 lumina.v1.Inference/Predict
+```
+
 ## Library usage
 
 ```rust
@@ -67,19 +88,7 @@ use std::net::SocketAddr;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let eng = InferenceEngine::new(EngineConfig::default())?;
     let addr: SocketAddr = "127.0.0.1:50051".parse()?;
-    serve_grpc(addr, eng).await?;
+    serve_grpc(addr, eng).await?; // includes reflection
     Ok(())
 }
-```
-
-## grpcurl example
-
-```bash
-# List services (reflection not enabled by default — use proto files)
-grpcurl -plaintext -proto proto/lumina/v1/inference.proto \
-  -d '{"id":"1","model":"default","input":"AAAAAA=="}' \
-  127.0.0.1:50051 lumina.v1.Inference/Predict
-
-grpcurl -plaintext -proto proto/lumina/v1/inference.proto \
-  -d '{}' 127.0.0.1:50051 lumina.v1.Inference/Health
 ```
