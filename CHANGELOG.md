@@ -1,11 +1,17 @@
 # Changelog
 
-## [Unreleased] - 2026-10-30
+## [0.1.0] - 2026-10-30
 
-### Added
-- Project `.gitignore` (Rust / models / env)
-- This changelog
-- `STATUS.md` with current focus and verify notes
+### Added — Rust engine scaffold
+- `Cargo.toml` package `lumina-inference`
+- Modules: `config`, `error`, `batch`, `worker`, `engine`
+- `LocalWorker` echo backend (placeholder for ONNX)
+- `InferenceEngine` with batching + round-robin workers
+- CLI binary `lumina` demo run
+- Unit tests for batch fill and engine flush
+
+### Docs
+- `.gitignore`, `STATUS.md`, CONTRIBUTING updates
 
 ## Vision (from README)
 
