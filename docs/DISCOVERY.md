@@ -1,6 +1,6 @@
 # Multi-node worker discovery
 
-Lumina can track remote inference peers and route work to them.
+Lumina tracks remote inference peers via **static lists** and optional **UDP gossip**.
 
 ## Concepts
 
@@ -8,23 +8,18 @@ Lumina can track remote inference peers and route work to them.
 |------|------|
 | `WorkerNode` | Peer id, gRPC endpoint, models, capacity, last_seen |
 | `WorkerRegistry` | Register / heartbeat / reap / round-robin `pick` |
-| `StaticPeerList` | Load peers from JSON file or env CSV |
+| `StaticPeerList` | JSON file or env CSV |
+| `GossipConfig` / `spawn_gossip` | UDP announce + listen (dynamic) |
 | `RemoteWorker` | `InferenceWorker` that calls a peer over gRPC |
 
-## Environment
+## Static peers
 
 ```bash
-# CSV peers
 export LUMINA_WORKERS="gpu-a=http://10.0.0.1:50051,gpu-b=http://10.0.0.2:50051"
-
-# Or JSON file
+# or
 export LUMINA_WORKERS_FILE=/etc/lumina/workers.json
-
-# Stale after N seconds (default 30)
 export LUMINA_WORKER_TTL_SECS=30
 ```
-
-### `workers.json` example
 
 ```json
 {
@@ -34,63 +29,68 @@ export LUMINA_WORKER_TTL_SECS=30
       "endpoint": "http://10.0.0.1:50051",
       "models": ["default", "resnet"],
       "capacity": 8
-    },
-    {
-      "id": "gpu-b",
-      "endpoint": "http://10.0.0.2:50051",
-      "models": ["*"],
-      "capacity": 4
     }
   ]
 }
 ```
 
-(`"*"` matches any model.)
+## Dynamic discovery (UDP gossip)
 
-## Library usage
+Nodes periodically broadcast a JSON `GossipMessage` and merge peers into the registry.
+
+```bash
+export LUMINA_GOSSIP=1
+export LUMINA_GOSSIP_PORT=19551          # default
+# optional overrides:
+# export LUMINA_GOSSIP_BIND=0.0.0.0:19551
+# export LUMINA_GOSSIP_ADDR=255.255.255.255:19551
+# export LUMINA_GOSSIP_INTERVAL_SECS=5
+```
+
+### Library
 
 ```rust
 use lumina_inference::{
-    discovery::{registry_from_env, WorkerNode, WorkerRegistry},
-    remote_worker::RemoteWorker,
-    worker::InferenceWorker,
-    EngineConfig, InferenceEngine, Metrics,
+    discovery::{registry_from_env, WorkerNode},
+    gossip::{spawn_gossip, GossipConfig},
 };
-use std::sync::Arc;
-use std::time::Duration;
 
-let mut reg = registry_from_env()?;
-// or: reg.register(WorkerNode::new("local", "http://127.0.0.1:50051"));
+#[tokio::main]
+async fn main() -> lumina_inference::Result<()> {
+    let local = WorkerNode::new("gpu-a", "http://10.0.0.1:50051")
+        .with_models(vec!["default".into()]);
+    let reg = registry_from_env()?;
+    let cfg = GossipConfig::from_env()?.unwrap_or_else(|| GossipConfig::lan(19551));
+    let (shared, _handles) = spawn_gossip(cfg, local, reg).await?;
 
-let mut workers: Vec<Box<dyn InferenceWorker>> = Vec::new();
-for node in reg.healthy() {
-    workers.push(Box::new(RemoteWorker::new(node.clone())));
+    // Later: list healthy peers
+    let peers = shared.lock().await.healthy();
+    for p in peers {
+        println!("{} -> {}", p.id, p.endpoint);
+    }
+    Ok(())
 }
-
-let eng = InferenceEngine::with_workers(
-    EngineConfig::default(),
-    workers,
-    Arc::new(Metrics::default()),
-)?;
 ```
 
-### Round-robin pick
+| Env | Meaning |
+|-----|---------|
+| `LUMINA_GOSSIP=1` | Enable gossip helpers from env |
+| `LUMINA_GOSSIP_PORT` | UDP port (default `19551`) |
+| `LUMINA_GOSSIP_BIND` | Listen bind address |
+| `LUMINA_GOSSIP_ADDR` | Announce destination (broadcast/unicast) |
+| `LUMINA_GOSSIP_INTERVAL_SECS` | Announce period |
 
-```rust
-if let Some(node) = reg.pick("resnet") {
-    let remote = RemoteWorker::new(node);
-    // use as InferenceWorker
-}
-reg.reap(); // drop stale nodes
-```
+**Notes**
 
-## Requirements
+- Uses UDP **broadcast** by default (`255.255.255.255`) — best on a LAN; cloud VPCs often block broadcast (use unicast `LUMINA_GOSSIP_ADDR` or static peers).
+- Self-announces are ignored via `self_id`.
+- Stale nodes are reaped on each received packet using registry TTL.
 
-- `RemoteWorker` needs `--features grpc` (and a running peer with `LUMINA_GRPC_ADDR`).
-- Discovery itself has **no** extra features — pure registry + static config.
+## RemoteWorker
+
+Needs `--features grpc`. Forwards `predict` / `predict_batch` to a peer endpoint.
 
 ## Roadmap
 
-- UDP / mDNS announce
-- etcd / Consul backends
-- Load-aware scheduling (not only RR)
+- mDNS / DNS-SD
+- Load-aware scheduling (capacity-weighted pick)
