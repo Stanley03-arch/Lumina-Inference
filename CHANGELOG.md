@@ -1,26 +1,26 @@
 # Changelog
 
-## [0.1.2] - 2026-10-30
+## [0.1.3] - 2026-10-30
 
 ### Added
-- `InferenceWorker` trait for pluggable backends
-- `OnnxWorker` with optional `ort` integration (`--features onnx`)
-- `InferenceEngine::with_workers` for custom pools
-- `docs/ONNX.md` setup guide
-- CLI: `LUMINA_ONNX_MODEL` env to load an ONNX file
+- Prometheus text exposition (`Metrics::encode_prometheus`)
+- HTTP `/metrics` + `/health` via `spawn_metrics_server`
+- Batch latency summary (`lumina_inference_latency_ms_*`)
+- CLI: `LUMINA_METRICS_ADDR=host:port` to serve metrics
+- `docs/METRICS.md`
 
 ### Changed
-- Default engine still uses `LocalWorker` echo backend
-- Package version **0.1.2**
+- Package version **0.1.3**
+- Engine records latency on successful flush
+
+## [0.1.2] - 2026-10-30
+
+- `InferenceWorker` trait, `OnnxWorker`, `--features onnx`
 
 ## [0.1.1] - 2026-10-30
 
-### Added
-- In-process `Metrics` counters
-- `ModelRegistry`
-- `AsyncInferenceEngine` with batch-timeout flush
+- Metrics counters, model registry, async engine
 
 ## [0.1.0] - 2026-10-30
 
-### Added
-- Initial Rust engine scaffold (config, batch, worker, engine, CLI)
+- Initial Rust engine scaffold
