@@ -7,12 +7,14 @@
 pub mod async_engine;
 pub mod batch;
 pub mod config;
+pub mod discovery;
 pub mod engine;
 pub mod error;
 pub mod metrics;
 pub mod onnx_worker;
 pub mod prometheus_server;
 pub mod registry;
+pub mod remote_worker;
 pub mod tensor;
 pub mod worker;
 
@@ -23,12 +25,14 @@ pub mod grpc_server;
 
 pub use async_engine::AsyncInferenceEngine;
 pub use config::EngineConfig;
+pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistry};
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
 pub use metrics::{Metrics, MetricsSnapshot};
 pub use onnx_worker::OnnxWorker;
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
 pub use registry::{ModelInfo, ModelRegistry};
+pub use remote_worker::RemoteWorker;
 pub use tensor::{IoBinding, NamedTensors, TensorDType, TensorSpec};
 pub use worker::{InferenceWorker, LocalWorker};
 
