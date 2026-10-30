@@ -4,6 +4,7 @@ use crate::error::Result;
 use crate::metrics::{Metrics, MetricsSnapshot};
 use crate::worker::{InferenceWorker, LocalWorker};
 use std::sync::Arc;
+use std::time::Instant;
 use tracing::{info, instrument};
 
 /// Central coordinator: accumulate → flush → worker.
@@ -98,9 +99,12 @@ impl InferenceEngine {
         self.next_worker = self.next_worker.wrapping_add(1);
         let worker = &self.workers[idx];
         info!(worker = %worker.name(), n, "running batch");
+        let start = Instant::now();
         match worker.run_batch(&items) {
             Ok(out) => {
                 self.metrics.record_batch(n);
+                self.metrics
+                    .record_latency_ms(start.elapsed().as_millis() as u64);
                 Ok(out)
             }
             Err(e) => {
@@ -145,5 +149,6 @@ mod tests {
         assert_eq!(snap.requests_total, 2);
         assert_eq!(snap.batches_total, 1);
         assert_eq!(snap.batch_items_total, 2);
+        assert_eq!(snap.inference_latency_ms_count, 1);
     }
 }
