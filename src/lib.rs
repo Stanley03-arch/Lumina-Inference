@@ -3,6 +3,7 @@
 //! Core crates expose engine configuration, request batching, and a
 //! pluggable model worker interface. Prometheus `/metrics` is built-in.
 //! ONNX Runtime: `--features onnx`. gRPC: `--features grpc` (needs `protoc`).
+//! mDNS/DNS-SD: `--features mdns`.
 
 pub mod async_engine;
 pub mod batch;
@@ -11,6 +12,7 @@ pub mod discovery;
 pub mod engine;
 pub mod error;
 pub mod gossip;
+pub mod mdns_discovery;
 pub mod metrics;
 pub mod onnx_worker;
 pub mod prometheus_server;
@@ -30,6 +32,7 @@ pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistr
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
+pub use mdns_discovery::{advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, SERVICE_TYPE};
 pub use metrics::{Metrics, MetricsSnapshot};
 pub use onnx_worker::OnnxWorker;
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
