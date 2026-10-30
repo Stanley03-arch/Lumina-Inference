@@ -1,6 +1,6 @@
 [package]
 name = "lumina-inference"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 description = "High-performance distributed inference engine"
 license = "MIT"
@@ -17,7 +17,7 @@ onnx = ["dep:ort"]
 grpc = ["dep:tonic", "dep:prost", "dep:tonic-reflection"]
 
 [dependencies]
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util", "signal"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"
