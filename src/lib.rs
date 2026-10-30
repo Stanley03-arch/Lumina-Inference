@@ -33,4 +33,7 @@ pub use worker::{InferenceWorker, LocalWorker};
 #[cfg(feature = "grpc")]
 pub use grpc_client::InferenceClient;
 #[cfg(feature = "grpc")]
-pub use grpc_server::{serve_grpc, serve_grpc_shared, InferenceService};
+pub use grpc_server::{
+    serve_grpc, serve_grpc_ctrl_c, serve_grpc_shared, GrpcServer, GrpcServerConfig,
+    InferenceService,
+};
