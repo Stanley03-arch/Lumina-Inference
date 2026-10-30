@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package lumina.v1;
+
+// Lumina inference service — single and batched predict RPCs.
+service Inference {
+  // Run one inference request (may wait for batching inside the engine).
+  rpc Predict(PredictRequest) returns (PredictResponse);
+
+  // Run a batch of requests and return all responses.
+  rpc PredictBatch(PredictBatchRequest) returns (PredictBatchResponse);
+
+  // Health / readiness probe.
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message PredictRequest {
+  string id = 1;
+  string model = 2;
+  bytes input = 3;
+}
+
+message PredictResponse {
+  string id = 1;
+  string model = 2;
+  bytes output = 3;
+  uint64 latency_ms = 4;
+}
+
+message PredictBatchRequest {
+  repeated PredictRequest requests = 1;
+}
+
+message PredictBatchResponse {
+  repeated PredictResponse responses = 1;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool ok = 1;
+  string version = 2;
+}
