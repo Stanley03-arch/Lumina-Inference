@@ -32,7 +32,10 @@ pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistr
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
-pub use mdns_discovery::{advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, SERVICE_TYPE};
+pub use mdns_discovery::{
+    advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
+    SERVICE_TYPE,
+};
 pub use metrics::{Metrics, MetricsSnapshot};
 pub use onnx_worker::OnnxWorker;
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
