@@ -23,8 +23,8 @@ We welcome contributions to the Lumina-Inference project! To ensure a smooth and
 5.  **Test Your Changes**: Run existing tests and add new ones if necessary to cover your changes. Ensure all tests pass.
 
     ```bash
-    # Example: Run unit tests
     cargo test
+    cargo fmt --check
     ```
 
 6.  **Commit Your Changes**: Write clear and concise commit messages. Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
@@ -39,7 +39,7 @@ We welcome contributions to the Lumina-Inference project! To ensure a smooth and
     git push origin feature/your-feature-name
     ```
 
-8.  **Create a Pull Request (PR)**: Open a pull request from your forked repository to the `main` branch of the original `Lumina-Inference` repository. Provide a detailed description of your changes, including:
+8.  **Create a Pull Request (PR)**: Open a pull request from your forked repository to the **`master`** branch of the original `Lumina-Inference` repository. Provide a detailed description of your changes, including:
 
     *   What problem does this PR solve?
     *   How were the changes implemented?
@@ -64,6 +64,10 @@ If you find a bug, please open an issue on the GitHub issue tracker. Provide as 
 ## Suggesting Enhancements
 
 We welcome suggestions for new features or improvements. Please open an issue on the GitHub issue tracker to discuss your ideas.
+
+## Project status
+
+See [STATUS.md](STATUS.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Code of Conduct
 
