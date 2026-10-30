@@ -1,24 +1,23 @@
 # Changelog
 
-## [0.1.10] - 2026-10-30
+## [0.1.11] - 2026-10-30
 
 ### Added
-- Full ONNX dtype encode/decode: **f32, f64, i64, i32, u8**
-- `TensorSpec::{f64,i64,i32,u8}` helpers
-- `IoBinding::single(..., dtype)`
-- Typed output extraction from session results
+- **UDP gossip** dynamic discovery (`gossip` module)
+- `GossipConfig`, `GossipMessage`, `spawn_gossip`, announcer + listener
+- Env: `LUMINA_GOSSIP`, `LUMINA_GOSSIP_PORT`, `LUMINA_GOSSIP_ADDR`, …
 
 ### Changed
-- Package version **0.1.10**
+- Package version **0.1.11**
+
+## [0.1.10] - 2026-10-30
+
+- ONNX dtypes f32/f64/i64/i32/u8
 
 ## [0.1.9] - 2026-10-30
 
-- Multi-node worker discovery + RemoteWorker
+- Static multi-node discovery + RemoteWorker
 
-## [0.1.8] - 2026-10-30
+## [0.1.8] — [0.1.0]
 
-- Named ONNX I/O tensors
-
-## [0.1.7] — [0.1.0]
-
-- gRPC, metrics, engine scaffold
+- Named tensors, gRPC, metrics, scaffold
