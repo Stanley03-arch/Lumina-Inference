@@ -1,6 +1,6 @@
 [package]
 name = "lumina-inference"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 description = "High-performance distributed inference engine"
 license = "MIT"
@@ -11,9 +11,7 @@ categories = ["science", "asynchronous"]
 
 [features]
 default = []
-# ONNX Runtime worker (needs ORT shared libs).
 onnx = ["dep:ort"]
-# gRPC server + client + reflection (needs `protoc` at build time).
 grpc = ["dep:tonic", "dep:prost", "dep:tonic-reflection"]
 
 [dependencies]
