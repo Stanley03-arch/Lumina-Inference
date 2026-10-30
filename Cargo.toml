@@ -1,6 +1,6 @@
 [package]
 name = "lumina-inference"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2021"
 description = "High-performance distributed inference engine"
 license = "MIT"
@@ -13,6 +13,7 @@ categories = ["science", "asynchronous"]
 default = []
 onnx = ["dep:ort"]
 grpc = ["dep:tonic", "dep:prost", "dep:tonic-reflection"]
+mdns = ["dep:mdns-sd"]
 
 [dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util", "signal"] }
@@ -25,6 +26,7 @@ ort = { version = "2", optional = true, default-features = true }
 tonic = { version = "0.12", optional = true }
 prost = { version = "0.13", optional = true }
 tonic-reflection = { version = "0.12", optional = true }
+mdns-sd = { version = "0.11", optional = true }
 
 [build-dependencies]
 tonic-build = "0.12"
