@@ -28,6 +28,9 @@ pub enum LuminaError {
     #[error("server is draining; not accepting new requests")]
     Draining,
 
+    #[error("unauthorized: {0}")]
+    Unauthorized(String),
+
     #[error("internal error: {0}")]
     Internal(String),
 }
