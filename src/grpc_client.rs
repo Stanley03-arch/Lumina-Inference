@@ -6,6 +6,7 @@ use crate::grpc_server::pb::inference_client::InferenceClient as PbClient;
 use crate::grpc_server::pb::{
     HealthRequest, PredictBatchRequest, PredictRequest as PbPredictRequest,
 };
+use crate::tensor::NamedTensors;
 use tonic::transport::Channel;
 
 /// High-level client around the generated tonic stubs.
@@ -49,6 +50,7 @@ impl InferenceClient {
             model: resp.model,
             output: resp.output,
             latency_ms: resp.latency_ms,
+            named_outputs: NamedTensors::default(),
         })
     }
 
@@ -79,6 +81,7 @@ impl InferenceClient {
                 model: r.model,
                 output: r.output,
                 latency_ms: r.latency_ms,
+                named_outputs: NamedTensors::default(),
             })
             .collect())
     }
