@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.16)
+## Current state (v0.1.17)
 
 | Piece | Status |
 |-------|--------|
@@ -10,12 +10,12 @@
 | ONNX + named tensors + dtypes | ✅ |
 | Prometheus + admin HTTP | ✅ |
 | gRPC server / client / reflection | ✅ |
-| Discovery (static / gossip / mDNS) | ✅ |
-| Scheduler + circuit breaker | ✅ |
+| Discovery + scheduler + circuit | ✅ |
 | Config + rate limit + retry | ✅ |
-| **Request deadlines** | ✅ |
-| **Sticky affinity** | ✅ |
-| **Graceful drain** | ✅ |
+| Deadlines + affinity + drain | ✅ |
+| **Priority queue** | ✅ |
+| **Health probes** | ✅ |
+| **Model warm-up** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
