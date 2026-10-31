@@ -68,10 +68,10 @@ pub async fn probe_grpc(endpoint: &str) -> ProbeResult {
     let start = Instant::now();
     match crate::grpc_client::InferenceClient::connect(endpoint).await {
         Ok(mut client) => match client.health().await {
-            Ok(msg) => ProbeResult {
-                ok: true,
+            Ok((ok, version)) => ProbeResult {
+                ok,
                 latency_ms: start.elapsed().as_millis() as u64,
-                detail: msg,
+                detail: version,
             },
             Err(e) => ProbeResult {
                 ok: false,
@@ -89,7 +89,6 @@ pub async fn probe_grpc(endpoint: &str) -> ProbeResult {
 
 #[cfg(not(feature = "grpc"))]
 pub async fn probe_grpc(endpoint: &str) -> ProbeResult {
-    // Fall back to TCP when gRPC not compiled in.
     probe_tcp(endpoint, Duration::from_secs(2))
 }
 
