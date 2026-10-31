@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.19)
+## Current state (v0.1.20)
 
 | Piece | Status |
 |-------|--------|
@@ -15,9 +15,10 @@
 | Deadlines + affinity + drain | ✅ |
 | Priority + health + warmup | ✅ |
 | Histogram + audit + model cache | ✅ |
-| **Model integrity (SHA-256)** | ✅ |
-| **SLO tracker** | ✅ |
-| **JSONL export** | ✅ |
+| Integrity + SLO + JSONL | ✅ |
+| **Token auth** | ✅ |
+| **Trace IDs** | ✅ |
+| **Feature flags** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
