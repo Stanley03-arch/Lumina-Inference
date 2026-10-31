@@ -2,6 +2,7 @@
 name = "lumina-inference"
 version = "0.1.13"
 edition = "2021"
+rust-version = "1.75"
 description = "High-performance distributed inference engine"
 license = "MIT"
 repository = "https://github.com/Stanley03-arch/Lumina-Inference"
@@ -16,12 +17,15 @@ grpc = ["dep:tonic", "dep:prost", "dep:tonic-reflection"]
 mdns = ["dep:mdns-sd"]
 
 [dependencies]
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util", "signal"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-thiserror = "1"
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "sync", "time", "net", "io-util", "signal"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Pins for older toolchains (avoid edition2024 crates)
+hashbrown = "=0.14.5"
+indexmap = "=2.2.6"
 ort = { version = "2.0.0-rc.15", optional = true, default-features = true }
 tonic = { version = "0.12", optional = true }
 prost = { version = "0.13", optional = true }
