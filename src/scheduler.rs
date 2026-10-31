@@ -4,6 +4,7 @@
 
 use crate::discovery::{WorkerNode, WorkerRegistry};
 use std::collections::HashMap;
+use std::cmp::Ordering;
 
 /// How to choose among healthy candidates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -106,14 +107,13 @@ impl Scheduler {
                     self.load
                         .load_ratio(a)
                         .partial_cmp(&self.load.load_ratio(b))
-                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .unwrap_or(Ordering::Equal)
                         .then_with(|| b.capacity.cmp(&a.capacity))
                         .then_with(|| a.id.cmp(&b.id))
                 });
                 Some(candidates[0].clone())
             }
             SchedulePolicy::WeightedCapacity => {
-                // Filter fully saturated nodes unless all are full.
                 let with_room: Vec<_> = candidates
                     .iter()
                     .filter(|n| self.load.remaining_capacity(n) > 0)
@@ -131,7 +131,6 @@ impl Scheduler {
                 if total == 0 {
                     return pool.into_iter().next();
                 }
-                // Deterministic pseudo-weight using rr counter (no RNG dep).
                 let mut slot = (self.rr as u64) % total;
                 self.rr = self.rr.wrapping_add(1);
                 for n in &pool {
@@ -164,15 +163,7 @@ impl Scheduler {
     pub fn release(&mut self, id: &str) {
         self.load.release(id);
     }
-}
 
-/// RAII guard that releases load when dropped.
-pub struct Lease<'a> {
-    scheduler: &'a mut Scheduler,
-    id: String,
-}
-
-impl Scheduler {
     pub fn lease<'a>(&'a mut self, node: &WorkerNode) -> Lease<'a> {
         self.load.acquire(&node.id);
         Lease {
@@ -180,6 +171,12 @@ impl Scheduler {
             id: node.id.clone(),
         }
     }
+}
+
+/// RAII guard that releases load when dropped.
+pub struct Lease<'a> {
+    scheduler: &'a mut Scheduler,
+    id: String,
 }
 
 impl Drop for Lease<'_> {
@@ -191,7 +188,6 @@ impl Drop for Lease<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::discovery::WorkerNode;
 
     fn reg_two() -> WorkerRegistry {
         let mut reg = WorkerRegistry::new();
@@ -225,7 +221,6 @@ mod tests {
             let n = sched.pick(&reg, "m").unwrap();
             *counts.entry(n.id).or_insert(0) += 1;
         }
-        // b has capacity 8 vs a capacity 2 → b should win most picks
         assert!(counts.get("b").copied().unwrap_or(0) > counts.get("a").copied().unwrap_or(0));
     }
 
