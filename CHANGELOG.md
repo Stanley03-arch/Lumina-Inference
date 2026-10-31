@@ -1,21 +1,20 @@
 # Changelog
 
-## [0.1.15] - 2026-10-31
+## [0.1.16] - 2026-11-01
 
 ### Added
-- **Retry** with exponential backoff (`RetryPolicy`, `retry`, `retry_async`)
-- **Token-bucket rate limiter** (`RateLimiter`, `RateLimitConfig`)
-- **Config loading**: `EngineConfig::from_file` / `from_env` / JSON
-- Rate-limit fields on `EngineConfig`
-- `docs/CONFIG.md`
+- **Request deadlines** (`deadline_ms` + `check_deadline`)
+- **Sticky affinity** (`AffinityTable` session → worker)
+- **Graceful drain** (`DrainGate` / `DrainPermit`)
+- Errors: `DeadlineExceeded`, `RateLimited`, `Draining`
 
 ### Changed
-- Package version **0.1.15**
+- Package version **0.1.16**
 
-## [0.1.14] - 2026-10-31
+## [0.1.15] - 2026-10-31
 
-- Circuit breaker + admin `/workers`
+- Retry, rate limit, config file
 
-## [0.1.13] — [0.1.0]
+## [0.1.14] — [0.1.0]
 
-- Scheduler, discovery, gRPC, ONNX, scaffold
+- Circuit, scheduler, discovery, gRPC, ONNX, scaffold
