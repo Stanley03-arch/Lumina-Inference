@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.15)
+## Current state (v0.1.16)
 
 | Piece | Status |
 |-------|--------|
@@ -11,10 +11,11 @@
 | Prometheus + admin HTTP | ✅ |
 | gRPC server / client / reflection | ✅ |
 | Discovery (static / gossip / mDNS) | ✅ |
-| Load-aware scheduler + circuit breaker | ✅ |
-| **Config file + env** | ✅ |
-| **Rate limiter** | ✅ |
-| **Retry / backoff** | ✅ |
+| Scheduler + circuit breaker | ✅ |
+| Config + rate limit + retry | ✅ |
+| **Request deadlines** | ✅ |
+| **Sticky affinity** | ✅ |
+| **Graceful drain** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
