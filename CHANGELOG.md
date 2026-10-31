@@ -1,20 +1,22 @@
 # Changelog
 
-## [0.1.16] - 2026-11-01
+## [0.1.17] - 2026-11-01
 
 ### Added
-- **Request deadlines** (`deadline_ms` + `check_deadline`)
-- **Sticky affinity** (`AffinityTable` session → worker)
-- **Graceful drain** (`DrainGate` / `DrainPermit`)
-- Errors: `DeadlineExceeded`, `RateLimited`, `Draining`
+- **Priority queue** (`Priority`, `PriorityQueue`) for admission ordering
+- **Health probes** (`probe_tcp`, `probe_node`, `probe_grpc`)
+- **Model warm-up** (`warmup_worker`, `WarmupConfig`)
+
+### Fixed
+- gRPC client responses include `named_outputs`
 
 ### Changed
-- Package version **0.1.16**
+- Package version **0.1.17**
 
-## [0.1.15] - 2026-10-31
+## [0.1.16] - 2026-11-01
 
-- Retry, rate limit, config file
+- Deadlines, affinity, drain
 
-## [0.1.14] — [0.1.0]
+## [0.1.15] — [0.1.0]
 
-- Circuit, scheduler, discovery, gRPC, ONNX, scaffold
+- Retry, discovery, gRPC, ONNX, scaffold
