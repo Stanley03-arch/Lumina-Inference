@@ -1,88 +1,62 @@
-# Multi-node worker discovery
+# Multi-node worker discovery & scheduling
 
-Lumina tracks remote inference peers via **static lists**, **UDP gossip**, and optional **mDNS/DNS-SD**.
+Lumina tracks peers via **static lists**, **UDP gossip**, and optional **mDNS**, then routes with a **load-aware scheduler** and **circuit breaker**.
 
-## Concepts
+## Discovery
 
-| Type | Role |
-|------|------|
-| `WorkerNode` | Peer id, gRPC endpoint, models, capacity |
-| `WorkerRegistry` | Register / reap / round-robin `pick` |
-| `StaticPeerList` | JSON / env CSV |
-| `spawn_gossip` | UDP announce + listen |
-| `advertise` / `browse_into_registry` | mDNS (`--features mdns`) |
-| `RemoteWorker` | gRPC peer worker |
-
-## Static peers
+| Mechanism | How |
+|-----------|-----|
+| Static | `LUMINA_WORKERS` / `LUMINA_WORKERS_FILE` |
+| Gossip | `LUMINA_GOSSIP=1` (UDP broadcast) |
+| mDNS | `--features mdns`, service `_lumina._tcp.local.` |
 
 ```bash
 export LUMINA_WORKERS="gpu-a=http://10.0.0.1:50051,gpu-b=http://10.0.0.2:50051"
-export LUMINA_WORKERS_FILE=/etc/lumina/workers.json
-export LUMINA_WORKER_TTL_SECS=30
 ```
 
-## UDP gossip
-
-```bash
-export LUMINA_GOSSIP=1
-export LUMINA_GOSSIP_PORT=19551
-```
-
-See `GossipConfig` / `spawn_gossip` in the crate docs.
-
-## mDNS / DNS-SD (`--features mdns`)
-
-Service type: **`_lumina._tcp.local.`**
-
-TXT records: `id`, `endpoint`, `models`, `capacity`
-
-```bash
-cargo build --features mdns
-```
-
-### Advertise
+## Scheduling
 
 ```rust
-use lumina_inference::{advertise, port_from_endpoint, WorkerNode};
+use lumina_inference::{
+    CircuitBreaker, CircuitConfig, SchedulePolicy, Scheduler, WorkerRegistry,
+};
 
-let node = WorkerNode::new("gpu-a", "http://192.168.1.10:50051");
-let port = port_from_endpoint(&node.endpoint);
-let _adv = advertise(&node, port)?; // keep handle alive
+let mut sched = Scheduler::new(SchedulePolicy::LeastLoaded)
+    .with_circuit(CircuitBreaker::new(CircuitConfig::default()));
+
+if let Some(node) = sched.pick_and_acquire(&registry, "default") {
+    match do_infer(&node) {
+        Ok(_) => sched.record_success(&node.id),
+        Err(_) => sched.record_failure(&node.id),
+    }
+    sched.release(&node.id);
+}
 ```
 
-### Browse
+| Policy | Behavior |
+|--------|----------|
+| `RoundRobin` | Even rotation |
+| `LeastLoaded` | Lowest `in_flight / capacity` |
+| `WeightedCapacity` | Prefer higher remaining capacity |
+
+### Circuit breaker
+
+- Default: **3** failures → **Open** for **30s** → **HalfOpen** trial → close on success
+- Open peers are skipped by `Scheduler::pick`
+
+## Admin HTTP
 
 ```rust
-use lumina_inference::{browse_into_registry, WorkerRegistry};
-use std::time::Duration;
-
-let mut reg = WorkerRegistry::new();
-let n = browse_into_registry(&mut reg, Duration::from_secs(3))?;
-println!("found {n} peers");
-```
-
-### Background browser
-
-```rust
-use lumina_inference::{spawn_mdns_browser, SharedRegistry};
+use lumina_inference::spawn_admin_server;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::Mutex;
 
-let shared: SharedRegistry = Arc::new(Mutex::new(WorkerRegistry::new()));
-let _h = spawn_mdns_browser(Arc::clone(&shared), Duration::from_secs(2));
+let reg = Arc::new(Mutex::new(registry));
+spawn_admin_server("127.0.0.1:9100".parse()?, reg, None).await?;
+// GET http://127.0.0.1:9100/workers  → JSON
+// GET http://127.0.0.1:9100/health   → ok
 ```
-
-**Notes**
-
-- Requires multicast on the LAN (same caveats as AirPlay/Chromecast).
-- Cloud VPCs often block mDNS — use static peers or gossip unicast there.
-- `MdnsAdvertiser` unregisters on drop/shutdown.
 
 ## RemoteWorker
 
-Needs `--features grpc`. Forwards `predict` / `predict_batch` to a peer.
-
-## Roadmap
-
-- Load-aware scheduling (capacity-weighted pick)
+Needs `--features grpc`. Forwards `predict` / `predict_batch` to a peer endpoint.
