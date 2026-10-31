@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.18)
+## Current state (v0.1.19)
 
 | Piece | Status |
 |-------|--------|
@@ -14,9 +14,10 @@
 | Config + rate limit + retry | ✅ |
 | Deadlines + affinity + drain | ✅ |
 | Priority + health + warmup | ✅ |
-| **Latency histogram (p50/p95/p99)** | ✅ |
-| **Request audit log** | ✅ |
-| **Model path LRU cache** | ✅ |
+| Histogram + audit + model cache | ✅ |
+| **Model integrity (SHA-256)** | ✅ |
+| **SLO tracker** | ✅ |
+| **JSONL export** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
