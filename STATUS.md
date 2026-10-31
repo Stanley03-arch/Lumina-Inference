@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.17)
+## Current state (v0.1.18)
 
 | Piece | Status |
 |-------|--------|
@@ -13,9 +13,10 @@
 | Discovery + scheduler + circuit | ✅ |
 | Config + rate limit + retry | ✅ |
 | Deadlines + affinity + drain | ✅ |
-| **Priority queue** | ✅ |
-| **Health probes** | ✅ |
-| **Model warm-up** | ✅ |
+| Priority + health + warmup | ✅ |
+| **Latency histogram (p50/p95/p99)** | ✅ |
+| **Request audit log** | ✅ |
+| **Model path LRU cache** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
