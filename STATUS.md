@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.12)
+## Current state (v0.1.13)
 
 | Piece | Status |
 |-------|--------|
@@ -10,8 +10,8 @@
 | ONNX + named tensors + dtypes | ✅ |
 | Prometheus `/metrics` | ✅ |
 | gRPC server / client / reflection | ✅ |
-| Static + UDP gossip discovery | ✅ |
-| **mDNS / DNS-SD** | ✅ (`--features mdns`) |
+| Static + gossip + mDNS discovery | ✅ |
+| **Load-aware scheduling** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
@@ -19,11 +19,9 @@
 
 ```bash
 cargo test
+cargo build
+cargo build --features grpc
 cargo build --features mdns
 ```
 
 Docs: [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md)
-
-## Next milestones
-
-1. Load-aware scheduling
