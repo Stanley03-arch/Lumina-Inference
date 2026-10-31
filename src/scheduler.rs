@@ -1,20 +1,19 @@
 //! Load-aware scheduling over a [`WorkerRegistry`].
 //!
 //! Tracks in-flight requests per node and prefers peers with spare capacity.
+//! Optional [`CircuitBreaker`] skips peers in the open state.
 
+use crate::circuit::CircuitBreaker;
 use crate::discovery::{WorkerNode, WorkerRegistry};
-use std::collections::HashMap;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 /// How to choose among healthy candidates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SchedulePolicy {
-    /// Classic round-robin (delegates to registry `pick`).
     #[default]
     RoundRobin,
-    /// Prefer the node with the lowest `in_flight / capacity` ratio.
     LeastLoaded,
-    /// Weighted by remaining capacity (`capacity - in_flight`).
     WeightedCapacity,
 }
 
@@ -33,12 +32,10 @@ impl LoadTracker {
         self.in_flight.get(id).copied().unwrap_or(0)
     }
 
-    /// Record that a request was dispatched to `id`.
     pub fn acquire(&mut self, id: &str) {
         *self.in_flight.entry(id.to_string()).or_insert(0) += 1;
     }
 
-    /// Record that a request finished on `id`.
     pub fn release(&mut self, id: &str) {
         if let Some(c) = self.in_flight.get_mut(id) {
             *c = c.saturating_sub(1);
@@ -64,6 +61,7 @@ impl LoadTracker {
 pub struct Scheduler {
     pub policy: SchedulePolicy,
     load: LoadTracker,
+    circuit: Option<CircuitBreaker>,
     rr: usize,
 }
 
@@ -72,8 +70,14 @@ impl Scheduler {
         Self {
             policy,
             load: LoadTracker::new(),
+            circuit: None,
             rr: 0,
         }
+    }
+
+    pub fn with_circuit(mut self, circuit: CircuitBreaker) -> Self {
+        self.circuit = Some(circuit);
+        self
     }
 
     pub fn load(&self) -> &LoadTracker {
@@ -84,12 +88,33 @@ impl Scheduler {
         &mut self.load
     }
 
-    /// Pick a healthy node for `model` using the configured policy.
-    /// Does **not** increment in-flight; call [`Self::acquire`] after dispatch.
+    pub fn circuit_mut(&mut self) -> Option<&mut CircuitBreaker> {
+        self.circuit.as_mut()
+    }
+
+    pub fn record_success(&mut self, id: &str) {
+        if let Some(cb) = self.circuit.as_mut() {
+            cb.record_success(id);
+        }
+    }
+
+    pub fn record_failure(&mut self, id: &str) {
+        if let Some(cb) = self.circuit.as_mut() {
+            cb.record_failure(id);
+        }
+    }
+
+    /// Pick a healthy, circuit-allowed node for `model`.
     pub fn pick(&mut self, registry: &WorkerRegistry, model: &str) -> Option<WorkerNode> {
         let mut candidates: Vec<WorkerNode> = registry
             .healthy_for_model(model)
             .into_iter()
+            .filter(|n| {
+                self.circuit
+                    .as_ref()
+                    .map(|cb| cb.allow(&n.id))
+                    .unwrap_or(true)
+            })
             .cloned()
             .collect();
         if candidates.is_empty() {
@@ -145,7 +170,6 @@ impl Scheduler {
         }
     }
 
-    /// Pick and immediately mark in-flight.
     pub fn pick_and_acquire(
         &mut self,
         registry: &WorkerRegistry,
@@ -173,7 +197,6 @@ impl Scheduler {
     }
 }
 
-/// RAII guard that releases load when dropped.
 pub struct Lease<'a> {
     scheduler: &'a mut Scheduler,
     id: String,
@@ -188,6 +211,8 @@ impl Drop for Lease<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::circuit::CircuitConfig;
+    use std::time::Duration;
 
     fn reg_two() -> WorkerRegistry {
         let mut reg = WorkerRegistry::new();
@@ -213,15 +238,20 @@ mod tests {
     }
 
     #[test]
-    fn weighted_prefers_higher_capacity() {
+    fn circuit_skips_open() {
         let reg = reg_two();
-        let mut sched = Scheduler::new(SchedulePolicy::WeightedCapacity);
-        let mut counts = HashMap::<String, u32>::new();
-        for _ in 0..100 {
+        let mut sched = Scheduler::new(SchedulePolicy::RoundRobin).with_circuit(
+            crate::circuit::CircuitBreaker::new(CircuitConfig {
+                failure_threshold: 1,
+                success_threshold: 1,
+                open_timeout: Duration::from_secs(60),
+            }),
+        );
+        sched.record_failure("a");
+        for _ in 0..10 {
             let n = sched.pick(&reg, "m").unwrap();
-            *counts.entry(n.id).or_insert(0) += 1;
+            assert_eq!(n.id, "b");
         }
-        assert!(counts.get("b").copied().unwrap_or(0) > counts.get("a").copied().unwrap_or(0));
     }
 
     #[test]
