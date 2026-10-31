@@ -5,8 +5,10 @@
 //! ONNX Runtime: `--features onnx`. gRPC: `--features grpc` (needs `protoc`).
 //! mDNS/DNS-SD: `--features mdns`.
 
+pub mod admin_server;
 pub mod async_engine;
 pub mod batch;
+pub mod circuit;
 pub mod config;
 pub mod discovery;
 pub mod engine;
@@ -27,7 +29,9 @@ pub mod grpc_client;
 #[cfg(feature = "grpc")]
 pub mod grpc_server;
 
+pub use admin_server::spawn_admin_server;
 pub use async_engine::AsyncInferenceEngine;
+pub use circuit::{CircuitBreaker, CircuitConfig, CircuitState};
 pub use config::EngineConfig;
 pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistry};
 pub use engine::InferenceEngine;
