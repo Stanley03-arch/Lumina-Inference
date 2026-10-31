@@ -1,19 +1,21 @@
 # Changelog
 
-## [0.1.14] - 2026-10-31
+## [0.1.15] - 2026-10-31
 
 ### Added
-- **Circuit breaker** per worker (`CircuitBreaker`, open / half-open / closed)
-- Scheduler skips open circuits; `record_success` / `record_failure`
-- **Admin HTTP** `GET /workers` (JSON) + `/health` via `spawn_admin_server`
+- **Retry** with exponential backoff (`RetryPolicy`, `retry`, `retry_async`)
+- **Token-bucket rate limiter** (`RateLimiter`, `RateLimitConfig`)
+- **Config loading**: `EngineConfig::from_file` / `from_env` / JSON
+- Rate-limit fields on `EngineConfig`
+- `docs/CONFIG.md`
 
 ### Changed
-- Package version **0.1.14**
+- Package version **0.1.15**
 
-## [0.1.13] - 2026-10-31
+## [0.1.14] - 2026-10-31
 
-- Load-aware scheduler
+- Circuit breaker + admin `/workers`
 
-## [0.1.12] — [0.1.0]
+## [0.1.13] — [0.1.0]
 
-- mDNS, gossip, gRPC, ONNX, scaffold
+- Scheduler, discovery, gRPC, ONNX, scaffold
