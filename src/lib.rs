@@ -8,6 +8,7 @@
 pub mod admin_server;
 pub mod affinity;
 pub mod async_engine;
+pub mod audit;
 pub mod batch;
 pub mod circuit;
 pub mod config;
@@ -17,8 +18,10 @@ pub mod engine;
 pub mod error;
 pub mod gossip;
 pub mod health;
+pub mod histogram;
 pub mod mdns_discovery;
 pub mod metrics;
+pub mod model_cache;
 pub mod onnx_worker;
 pub mod priority;
 pub mod prometheus_server;
@@ -39,6 +42,7 @@ pub mod grpc_server;
 pub use admin_server::spawn_admin_server;
 pub use affinity::AffinityTable;
 pub use async_engine::AsyncInferenceEngine;
+pub use audit::{AuditEvent, AuditLog};
 pub use circuit::{CircuitBreaker, CircuitConfig, CircuitState};
 pub use config::EngineConfig;
 pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistry};
@@ -47,11 +51,13 @@ pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
 pub use health::{probe_grpc, probe_node, probe_tcp, ProbeResult};
+pub use histogram::{Histogram, DEFAULT_BOUNDS_MS};
 pub use mdns_discovery::{
     advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
     SERVICE_TYPE,
 };
 pub use metrics::{Metrics, MetricsSnapshot};
+pub use model_cache::ModelCache;
 pub use onnx_worker::OnnxWorker;
 pub use priority::{Priority, PriorityQueue};
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
