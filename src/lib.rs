@@ -18,6 +18,7 @@ pub mod onnx_worker;
 pub mod prometheus_server;
 pub mod registry;
 pub mod remote_worker;
+pub mod scheduler;
 pub mod tensor;
 pub mod worker;
 
@@ -41,6 +42,7 @@ pub use onnx_worker::OnnxWorker;
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
 pub use registry::{ModelInfo, ModelRegistry};
 pub use remote_worker::RemoteWorker;
+pub use scheduler::{Lease, LoadTracker, SchedulePolicy, Scheduler};
 pub use tensor::{IoBinding, NamedTensors, TensorDType, TensorSpec};
 pub use worker::{InferenceWorker, LocalWorker};
 
