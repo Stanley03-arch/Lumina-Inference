@@ -2,18 +2,19 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.14)
+## Current state (v0.1.15)
 
 | Piece | Status |
 |-------|--------|
 | Engine + batching + metrics | ✅ |
 | ONNX + named tensors + dtypes | ✅ |
-| Prometheus `/metrics` | ✅ |
+| Prometheus + admin HTTP | ✅ |
 | gRPC server / client / reflection | ✅ |
-| Static + gossip + mDNS discovery | ✅ |
-| Load-aware scheduling | ✅ |
-| **Circuit breaker** | ✅ |
-| **Admin `/workers`** | ✅ |
+| Discovery (static / gossip / mDNS) | ✅ |
+| Load-aware scheduler + circuit breaker | ✅ |
+| **Config file + env** | ✅ |
+| **Rate limiter** | ✅ |
+| **Retry / backoff** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
@@ -24,4 +25,4 @@ cargo test
 cargo build
 ```
 
-Docs: [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md)
+Docs: [CONFIG](docs/CONFIG.md) · [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md)
