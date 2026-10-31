@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.18] - 2026-11-01
+## [0.1.19] - 2026-11-01
 
 ### Added
-- **Latency histogram** with p50/p95/p99 + Prometheus buckets
-- **Audit log** ring buffer (`AuditLog` / `AuditEvent`)
-- **Model path LRU cache** (`ModelCache`)
+- **Model integrity** (size + pure-Rust SHA-256, no extra crate)
+- **SLO tracker** (sliding-window success / latency budget)
+- **JSON Lines writer** for event export
 
 ### Changed
-- Package version **0.1.18**
+- Package version **0.1.19**
 
-## [0.1.17] - 2026-11-01
+## [0.1.18] - 2026-11-01
 
-- Priority queue, health probes, warmup
+- Histogram, audit log, model cache
 
-## [0.1.16] — [0.1.0]
+## [0.1.17] — [0.1.0]
 
-- Drain, affinity, discovery, gRPC, ONNX, scaffold
+- Priority, discovery, gRPC, ONNX, scaffold
