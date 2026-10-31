@@ -19,6 +19,15 @@ pub enum LuminaError {
     #[error("inference failed: {0}")]
     Inference(String),
 
+    #[error("request deadline exceeded")]
+    DeadlineExceeded,
+
+    #[error("rate limited")]
+    RateLimited,
+
+    #[error("server is draining; not accepting new requests")]
+    Draining,
+
     #[error("internal error: {0}")]
     Internal(String),
 }
