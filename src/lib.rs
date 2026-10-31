@@ -19,6 +19,8 @@ pub mod error;
 pub mod gossip;
 pub mod health;
 pub mod histogram;
+pub mod integrity;
+pub mod jsonl;
 pub mod mdns_discovery;
 pub mod metrics;
 pub mod model_cache;
@@ -30,6 +32,7 @@ pub mod registry;
 pub mod remote_worker;
 pub mod retry;
 pub mod scheduler;
+pub mod slo;
 pub mod tensor;
 pub mod warmup;
 pub mod worker;
@@ -52,6 +55,8 @@ pub use error::{LuminaError, Result};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
 pub use health::{probe_grpc, probe_node, probe_tcp, ProbeResult};
 pub use histogram::{Histogram, DEFAULT_BOUNDS_MS};
+pub use integrity::{sha256_file, verify_model, ModelDigest};
+pub use jsonl::JsonlWriter;
 pub use mdns_discovery::{
     advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
     SERVICE_TYPE,
@@ -66,6 +71,7 @@ pub use registry::{ModelInfo, ModelRegistry};
 pub use remote_worker::RemoteWorker;
 pub use retry::{retry, retry_async, RetryPolicy};
 pub use scheduler::{Lease, LoadTracker, SchedulePolicy, Scheduler};
+pub use slo::SloTracker;
 pub use tensor::{IoBinding, NamedTensors, TensorDType, TensorSpec};
 pub use warmup::{warmup_worker, WarmupConfig};
 pub use worker::{InferenceWorker, LocalWorker};
