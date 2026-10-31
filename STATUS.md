@@ -2,7 +2,7 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.13)
+## Current state (v0.1.14)
 
 | Piece | Status |
 |-------|--------|
@@ -11,7 +11,9 @@
 | Prometheus `/metrics` | ✅ |
 | gRPC server / client / reflection | ✅ |
 | Static + gossip + mDNS discovery | ✅ |
-| **Load-aware scheduling** | ✅ |
+| Load-aware scheduling | ✅ |
+| **Circuit breaker** | ✅ |
+| **Admin `/workers`** | ✅ |
 | RemoteWorker | ✅ |
 | CLI | ✅ |
 
@@ -20,8 +22,6 @@
 ```bash
 cargo test
 cargo build
-cargo build --features grpc
-cargo build --features mdns
 ```
 
 Docs: [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md)
