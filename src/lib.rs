@@ -6,11 +6,13 @@
 //! mDNS/DNS-SD: `--features mdns`.
 
 pub mod admin_server;
+pub mod affinity;
 pub mod async_engine;
 pub mod batch;
 pub mod circuit;
 pub mod config;
 pub mod discovery;
+pub mod drain;
 pub mod engine;
 pub mod error;
 pub mod gossip;
@@ -32,10 +34,12 @@ pub mod grpc_client;
 pub mod grpc_server;
 
 pub use admin_server::spawn_admin_server;
+pub use affinity::AffinityTable;
 pub use async_engine::AsyncInferenceEngine;
 pub use circuit::{CircuitBreaker, CircuitConfig, CircuitState};
 pub use config::EngineConfig;
 pub use discovery::{registry_from_env, StaticPeerList, WorkerNode, WorkerRegistry};
+pub use drain::{DrainGate, DrainPermit};
 pub use engine::InferenceEngine;
 pub use error::{LuminaError, Result};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
