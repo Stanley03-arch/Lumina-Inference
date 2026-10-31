@@ -1,23 +1,19 @@
 # Changelog
 
-## [0.1.13] - 2026-10-31
+## [0.1.14] - 2026-10-31
 
 ### Added
-- **Load-aware scheduler**: `SchedulePolicy::{RoundRobin,LeastLoaded,WeightedCapacity}`
-- `LoadTracker`, `Scheduler`, RAII `Lease`
-- Capacity-weighted and least-loaded peer selection
+- **Circuit breaker** per worker (`CircuitBreaker`, open / half-open / closed)
+- Scheduler skips open circuits; `record_success` / `record_failure`
+- **Admin HTTP** `GET /workers` (JSON) + `/health` via `spawn_admin_server`
 
 ### Changed
-- Package version **0.1.13**
+- Package version **0.1.14**
 
-## [0.1.12] - 2026-10-30
+## [0.1.13] - 2026-10-31
 
-- mDNS / DNS-SD discovery
+- Load-aware scheduler
 
-## [0.1.11] - 2026-10-30
+## [0.1.12] — [0.1.0]
 
-- UDP gossip discovery
-
-## [0.1.10] — [0.1.0]
-
-- ONNX dtypes, gRPC, metrics, scaffold
+- mDNS, gossip, gRPC, ONNX, scaffold
