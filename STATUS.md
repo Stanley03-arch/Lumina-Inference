@@ -2,24 +2,22 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.20)
+## Current state (v0.1.21)
 
 | Piece | Status |
 |-------|--------|
 | Engine + batching + metrics | ✅ |
-| ONNX + named tensors + dtypes | ✅ |
-| Prometheus + admin HTTP | ✅ |
-| gRPC server / client / reflection | ✅ |
+| ONNX + gRPC + mDNS features | ✅ |
 | Discovery + scheduler + circuit | ✅ |
 | Config + rate limit + retry | ✅ |
 | Deadlines + affinity + drain | ✅ |
 | Priority + health + warmup | ✅ |
 | Histogram + audit + model cache | ✅ |
 | Integrity + SLO + JSONL | ✅ |
-| **Token auth** | ✅ |
-| **Trace IDs** | ✅ |
-| **Feature flags** | ✅ |
-| RemoteWorker | ✅ |
+| Auth + trace + feature flags | ✅ |
+| **Backpressure** | ✅ |
+| **Shutdown coordinator** | ✅ |
+| **Version / feature summary** | ✅ |
 | CLI | ✅ |
 
 ## Verify
@@ -28,5 +26,3 @@
 cargo test
 cargo build
 ```
-
-Docs: [CONFIG](docs/CONFIG.md) · [DISCOVERY](docs/DISCOVERY.md) · [ONNX](docs/ONNX.md) · [GRPC](docs/GRPC.md)
