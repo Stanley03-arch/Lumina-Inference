@@ -2,17 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.22)
+## Current state (v0.1.23)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
-| Discovery + scheduler + circuit | ✅ |
-| Auth + trace + flags | ✅ |
-| Backpressure + shutdown + version | ✅ |
-| **Memory guard** | ✅ |
-| **Response cache** | ✅ |
-| **Window counter (QPS)** | ✅ |
+| Discovery + scheduler + ops suite | ✅ |
+| Memory guard + response cache | ✅ |
+| **Adaptive batch sizing** | ✅ |
+| **Work queue** | ✅ |
+| **Host / worker identity** | ✅ |
 | CLI | ✅ |
 
 ## Verify
