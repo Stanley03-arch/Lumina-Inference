@@ -5,6 +5,7 @@
 //! ONNX Runtime: `--features onnx`. gRPC: `--features grpc` (needs `protoc`).
 //! mDNS/DNS-SD: `--features mdns`.
 
+pub mod adaptive_batch;
 pub mod admin_server;
 pub mod affinity;
 pub mod async_engine;
@@ -22,6 +23,7 @@ pub mod flags;
 pub mod gossip;
 pub mod health;
 pub mod histogram;
+pub mod host_info;
 pub mod integrity;
 pub mod jsonl;
 pub mod mdns_discovery;
@@ -44,6 +46,7 @@ pub mod trace;
 pub mod version_info;
 pub mod warmup;
 pub mod window_counter;
+pub mod work_queue;
 pub mod worker;
 
 #[cfg(feature = "grpc")]
@@ -51,6 +54,7 @@ pub mod grpc_client;
 #[cfg(feature = "grpc")]
 pub mod grpc_server;
 
+pub use adaptive_batch::AdaptiveBatch;
 pub use admin_server::spawn_admin_server;
 pub use affinity::AffinityTable;
 pub use async_engine::AsyncInferenceEngine;
@@ -67,6 +71,7 @@ pub use flags::{FeatureFlags, Flag};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
 pub use health::{probe_grpc, probe_node, probe_tcp, ProbeResult};
 pub use histogram::{Histogram, DEFAULT_BOUNDS_MS};
+pub use host_info::{default_endpoint, default_worker_id, hostname, pid_string};
 pub use integrity::{sha256_file, verify_model, ModelDigest};
 pub use jsonl::JsonlWriter;
 pub use mdns_discovery::{
@@ -92,6 +97,7 @@ pub use trace::{new_trace_id, resolve_trace_id, HEADER_TRACE, HEADER_TRACE_ALT};
 pub use version_info::{feature_summary, package_version, version_json};
 pub use warmup::{warmup_worker, WarmupConfig};
 pub use window_counter::WindowCounter;
+pub use work_queue::WorkQueue;
 pub use worker::{InferenceWorker, LocalWorker};
 
 #[cfg(feature = "grpc")]
