@@ -25,6 +25,7 @@ pub mod histogram;
 pub mod integrity;
 pub mod jsonl;
 pub mod mdns_discovery;
+pub mod memory_guard;
 pub mod metrics;
 pub mod model_cache;
 pub mod onnx_worker;
@@ -33,6 +34,7 @@ pub mod prometheus_server;
 pub mod rate_limit;
 pub mod registry;
 pub mod remote_worker;
+pub mod response_cache;
 pub mod retry;
 pub mod scheduler;
 pub mod shutdown;
@@ -41,6 +43,7 @@ pub mod tensor;
 pub mod trace;
 pub mod version_info;
 pub mod warmup;
+pub mod window_counter;
 pub mod worker;
 
 #[cfg(feature = "grpc")]
@@ -70,6 +73,7 @@ pub use mdns_discovery::{
     advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
     SERVICE_TYPE,
 };
+pub use memory_guard::MemoryGuard;
 pub use metrics::{Metrics, MetricsSnapshot};
 pub use model_cache::ModelCache;
 pub use onnx_worker::OnnxWorker;
@@ -78,6 +82,7 @@ pub use prometheus_server::{serve_metrics, spawn_metrics_server};
 pub use rate_limit::{RateLimitConfig, RateLimiter};
 pub use registry::{ModelInfo, ModelRegistry};
 pub use remote_worker::RemoteWorker;
+pub use response_cache::ResponseCache;
 pub use retry::{retry, retry_async, RetryPolicy};
 pub use scheduler::{Lease, LoadTracker, SchedulePolicy, Scheduler};
 pub use shutdown::Shutdown;
@@ -86,6 +91,7 @@ pub use tensor::{IoBinding, NamedTensors, TensorDType, TensorSpec};
 pub use trace::{new_trace_id, resolve_trace_id, HEADER_TRACE, HEADER_TRACE_ALT};
 pub use version_info::{feature_summary, package_version, version_json};
 pub use warmup::{warmup_worker, WarmupConfig};
+pub use window_counter::WindowCounter;
 pub use worker::{InferenceWorker, LocalWorker};
 
 #[cfg(feature = "grpc")]
