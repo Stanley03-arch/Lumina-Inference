@@ -2,16 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.25)
+## Current state (v0.1.26)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
-| Ops suite (auth, cache, SLO, …) | ✅ |
-| EMA + debounce + bytes_fmt | ✅ |
-| **Stopwatch / ScopeTimer** | ✅ |
-| **Bloom filter dedup** | ✅ |
-| **Duration parse (env)** | ✅ |
+| Ops / observability suite | ✅ |
+| Stopwatch + bloom + duration | ✅ |
+| **Ring buffer** | ✅ |
+| **OnceFlag** | ✅ |
+| **KeyedLimiter** | ✅ |
 | CLI | ✅ |
 
 ## Verify
