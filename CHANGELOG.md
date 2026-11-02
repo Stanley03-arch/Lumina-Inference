@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.27] - 2026-11-02
+## [0.1.28] - 2026-11-02
 
 ### Added
-- **CountDownLatch** — multi-party barrier
-- **env_util** — `env_bool`, `env_u64`, `env_list`, …
-- **Fanout** — sync event broadcaster
+- **EveryN** / **PercentSampler** — sampling gates
+- **RollingAvg** — fixed-window mean
+- **IdGen** — monotonic request / batch IDs
 
 ### Changed
-- Package version **0.1.27**
+- Package version **0.1.28**
 
-## [0.1.26] - 2026-11-02
+## [0.1.27] - 2026-11-02
 
-- RingBuf, OnceFlag, KeyedLimiter
+- Latch, env_util, fanout
 
-## [0.1.25] — [0.1.0]
+## [0.1.26] — [0.1.0]
 
-- Stopwatch, auth, discovery, gRPC, ONNX, scaffold
+- RingBuf, auth, discovery, gRPC, ONNX, scaffold
