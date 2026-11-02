@@ -2,16 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.29)
+## Current state (v0.1.30)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
 | Ops / observability suite | ✅ |
-| Sampler + rolling avg + IdGen | ✅ |
-| **MinMax stats** | ✅ |
-| **DeadlineTimer** | ✅ |
-| **Lifecycle Phase** | ✅ |
+| MinMax + DeadlineTimer + Phase | ✅ |
+| **LeakyBucket** | ✅ |
+| **Readiness checks** | ✅ |
+| **StringInterner** | ✅ |
 | CLI | ✅ |
 
 ## Verify
