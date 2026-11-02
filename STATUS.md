@@ -2,16 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.24)
+## Current state (v0.1.25)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
-| Discovery + scheduler + ops suite | ✅ |
-| Adaptive batch + work queue | ✅ |
-| **EMA latency smoother** | ✅ |
-| **Debounce gate** | ✅ |
-| **Byte size format/parse** | ✅ |
+| Ops suite (auth, cache, SLO, …) | ✅ |
+| EMA + debounce + bytes_fmt | ✅ |
+| **Stopwatch / ScopeTimer** | ✅ |
+| **Bloom filter dedup** | ✅ |
+| **Duration parse (env)** | ✅ |
 | CLI | ✅ |
 
 ## Verify
