@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.26] - 2026-11-02
+## [0.1.27] - 2026-11-02
 
 ### Added
-- **RingBuf** — fixed-capacity circular buffer
-- **OnceFlag** — atomic one-shot init
-- **KeyedLimiter** — per-client token-bucket limits
+- **CountDownLatch** — multi-party barrier
+- **env_util** — `env_bool`, `env_u64`, `env_list`, …
+- **Fanout** — sync event broadcaster
 
 ### Changed
-- Package version **0.1.26**
+- Package version **0.1.27**
 
-## [0.1.25] - 2026-11-02
+## [0.1.26] - 2026-11-02
 
-- Stopwatch, bloom filter, duration parse
+- RingBuf, OnceFlag, KeyedLimiter
 
-## [0.1.24] — [0.1.0]
+## [0.1.25] — [0.1.0]
 
-- EMA, auth, discovery, gRPC, ONNX, scaffold
+- Stopwatch, auth, discovery, gRPC, ONNX, scaffold
