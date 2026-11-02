@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.32] - 2026-11-02
+## [0.1.33] - 2026-11-02
 
 ### Added
-- **Cooldown** — per-key post-failure cool-down
-- **jitter** — full / equal / decorrelated backoff helpers
-- **Coalescer** — single-flight in-flight dedupe by key
+- **ExponentialBackoff** with optional jitter
+- **HealthScore** — 0–100 worker score from success + latency
+- **DepthGauge** — queue high/low watermarks
 
 ### Changed
-- Package version **0.1.32**
+- Package version **0.1.33**
 
-## [0.1.31] - 2026-11-02
+## [0.1.32] - 2026-11-02
 
-- Throttle, weighted RR, progress
+- Cooldown, jitter, coalescer
 
-## [0.1.30] — [0.1.0]
+## [0.1.31] — [0.1.0]
 
-- Readiness, auth, discovery, gRPC, ONNX, scaffold
+- Throttle, auth, discovery, gRPC, ONNX, scaffold
