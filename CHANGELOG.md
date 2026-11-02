@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.24] - 2026-11-02
+## [0.1.25] - 2026-11-02
 
 ### Added
-- **Ema** — exponential moving average for latency smoothing
-- **Debounce** — rate-limit rapid triggers
-- **bytes_fmt** — `format_bytes` / `parse_bytes`
+- **Stopwatch** / **ScopeTimer** for latency measurement
+- **BloomFilter** for approximate request-id dedup
+- **parse_duration** / **duration_from_env** (`30ms`, `5s`, `2m`)
 
 ### Changed
-- Package version **0.1.24**
+- Package version **0.1.25**
 
-## [0.1.23] - 2026-11-01
+## [0.1.24] - 2026-11-02
 
-- Adaptive batch, work queue, host info
+- EMA, debounce, bytes_fmt
 
-## [0.1.22] — [0.1.0]
+## [0.1.23] — [0.1.0]
 
-- Cache, auth, discovery, gRPC, ONNX, scaffold
+- Adaptive batch, auth, discovery, gRPC, ONNX, scaffold
