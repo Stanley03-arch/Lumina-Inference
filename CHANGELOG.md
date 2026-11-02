@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.31] - 2026-11-02
+## [0.1.32] - 2026-11-02
 
 ### Added
-- **Throttle** — minimum-interval admit gate
-- **WeightedRoundRobin** — smooth WRR worker picker
-- **Progress** — atomic load/warmup percent tracking
+- **Cooldown** — per-key post-failure cool-down
+- **jitter** — full / equal / decorrelated backoff helpers
+- **Coalescer** — single-flight in-flight dedupe by key
 
 ### Changed
-- Package version **0.1.31**
+- Package version **0.1.32**
 
-## [0.1.30] - 2026-11-02
+## [0.1.31] - 2026-11-02
 
-- LeakyBucket, Readiness, StringInterner
+- Throttle, weighted RR, progress
 
-## [0.1.29] — [0.1.0]
+## [0.1.30] — [0.1.0]
 
-- MinMax, auth, discovery, gRPC, ONNX, scaffold
+- Readiness, auth, discovery, gRPC, ONNX, scaffold
