@@ -2,16 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.31)
+## Current state (v0.1.32)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
 | Ops / observability suite | ✅ |
-| LeakyBucket + Readiness + Intern | ✅ |
-| **Throttle** | ✅ |
-| **Weighted round-robin** | ✅ |
-| **Progress tracker** | ✅ |
+| Throttle + WRR + progress | ✅ |
+| **Cooldown** | ✅ |
+| **Jitter helpers** | ✅ |
+| **Request coalescer** | ✅ |
 | CLI | ✅ |
 
 ## Verify
