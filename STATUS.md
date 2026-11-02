@@ -2,16 +2,16 @@
 
 **High-performance distributed inference engine (Rust).**
 
-## Current state (v0.1.26)
+## Current state (v0.1.27)
 
 | Piece | Status |
 |-------|--------|
 | Engine + ONNX + gRPC + mDNS | ✅ |
 | Ops / observability suite | ✅ |
-| Stopwatch + bloom + duration | ✅ |
-| **Ring buffer** | ✅ |
-| **OnceFlag** | ✅ |
-| **KeyedLimiter** | ✅ |
+| RingBuf + OnceFlag + KeyedLimiter | ✅ |
+| **CountDownLatch** | ✅ |
+| **env_util helpers** | ✅ |
+| **Fanout broadcaster** | ✅ |
 | CLI | ✅ |
 
 ## Verify
