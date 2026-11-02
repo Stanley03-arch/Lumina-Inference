@@ -23,7 +23,9 @@ pub mod drain;
 pub mod duration_parse;
 pub mod ema;
 pub mod engine;
+pub mod env_util;
 pub mod error;
+pub mod fanout;
 pub mod flags;
 pub mod gossip;
 pub mod health;
@@ -32,6 +34,7 @@ pub mod host_info;
 pub mod integrity;
 pub mod jsonl;
 pub mod keyed_limit;
+pub mod latch;
 pub mod mdns_discovery;
 pub mod memory_guard;
 pub mod metrics;
@@ -80,7 +83,9 @@ pub use drain::{DrainGate, DrainPermit};
 pub use duration_parse::{duration_from_env, parse_duration};
 pub use ema::Ema;
 pub use engine::InferenceEngine;
+pub use env_util::{env_bool, env_list, env_string, env_u64, env_usize};
 pub use error::{LuminaError, Result};
+pub use fanout::Fanout;
 pub use flags::{FeatureFlags, Flag};
 pub use gossip::{spawn_gossip, GossipConfig, GossipMessage, SharedRegistry, DEFAULT_GOSSIP_PORT};
 pub use health::{probe_grpc, probe_node, probe_tcp, ProbeResult};
@@ -89,6 +94,7 @@ pub use host_info::{default_endpoint, default_worker_id, hostname, pid_string};
 pub use integrity::{sha256_file, verify_model, ModelDigest};
 pub use jsonl::JsonlWriter;
 pub use keyed_limit::KeyedLimiter;
+pub use latch::CountDownLatch;
 pub use mdns_discovery::{
     advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
     SERVICE_TYPE,
