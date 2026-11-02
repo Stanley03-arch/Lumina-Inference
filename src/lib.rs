@@ -31,10 +31,12 @@ pub mod histogram;
 pub mod host_info;
 pub mod integrity;
 pub mod jsonl;
+pub mod keyed_limit;
 pub mod mdns_discovery;
 pub mod memory_guard;
 pub mod metrics;
 pub mod model_cache;
+pub mod once_flag;
 pub mod onnx_worker;
 pub mod priority;
 pub mod prometheus_server;
@@ -43,6 +45,7 @@ pub mod registry;
 pub mod remote_worker;
 pub mod response_cache;
 pub mod retry;
+pub mod ring_buf;
 pub mod scheduler;
 pub mod shutdown;
 pub mod slo;
@@ -85,6 +88,7 @@ pub use histogram::{Histogram, DEFAULT_BOUNDS_MS};
 pub use host_info::{default_endpoint, default_worker_id, hostname, pid_string};
 pub use integrity::{sha256_file, verify_model, ModelDigest};
 pub use jsonl::JsonlWriter;
+pub use keyed_limit::KeyedLimiter;
 pub use mdns_discovery::{
     advertise, browse_into_registry, port_from_endpoint, spawn_mdns_browser, MdnsAdvertiser,
     SERVICE_TYPE,
@@ -92,6 +96,7 @@ pub use mdns_discovery::{
 pub use memory_guard::MemoryGuard;
 pub use metrics::{Metrics, MetricsSnapshot};
 pub use model_cache::ModelCache;
+pub use once_flag::OnceFlag;
 pub use onnx_worker::OnnxWorker;
 pub use priority::{Priority, PriorityQueue};
 pub use prometheus_server::{serve_metrics, spawn_metrics_server};
@@ -100,6 +105,7 @@ pub use registry::{ModelInfo, ModelRegistry};
 pub use remote_worker::RemoteWorker;
 pub use response_cache::ResponseCache;
 pub use retry::{retry, retry_async, RetryPolicy};
+pub use ring_buf::RingBuf;
 pub use scheduler::{Lease, LoadTracker, SchedulePolicy, Scheduler};
 pub use shutdown::Shutdown;
 pub use slo::SloTracker;
