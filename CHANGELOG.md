@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.30] - 2026-11-02
+## [0.1.31] - 2026-11-02
 
 ### Added
-- **LeakyBucket** rate limiter
-- **Readiness** multi-check aggregator (+ JSON)
-- **StringInterner** for model-name dedupe
+- **Throttle** — minimum-interval admit gate
+- **WeightedRoundRobin** — smooth WRR worker picker
+- **Progress** — atomic load/warmup percent tracking
 
 ### Changed
-- Package version **0.1.30**
+- Package version **0.1.31**
 
-## [0.1.29] - 2026-11-02
+## [0.1.30] - 2026-11-02
 
-- MinMax, DeadlineTimer, Phase
+- LeakyBucket, Readiness, StringInterner
 
-## [0.1.28] — [0.1.0]
+## [0.1.29] — [0.1.0]
 
-- Sampler, auth, discovery, gRPC, ONNX, scaffold
+- MinMax, auth, discovery, gRPC, ONNX, scaffold
