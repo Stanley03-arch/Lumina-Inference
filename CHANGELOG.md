@@ -1,19 +1,19 @@
 # Changelog
 
-## [0.1.29] - 2026-11-02
+## [0.1.30] - 2026-11-02
 
 ### Added
-- **MinMax** — running min / max / mean
-- **DeadlineTimer** — absolute budget with `check()`
-- **Phase** — engine lifecycle (starting → ready → draining)
+- **LeakyBucket** rate limiter
+- **Readiness** multi-check aggregator (+ JSON)
+- **StringInterner** for model-name dedupe
 
 ### Changed
-- Package version **0.1.29**
+- Package version **0.1.30**
 
-## [0.1.28] - 2026-11-02
+## [0.1.29] - 2026-11-02
 
-- Sampler, rolling avg, IdGen
+- MinMax, DeadlineTimer, Phase
 
-## [0.1.27] — [0.1.0]
+## [0.1.28] — [0.1.0]
 
-- Latch, auth, discovery, gRPC, ONNX, scaffold
+- Sampler, auth, discovery, gRPC, ONNX, scaffold
